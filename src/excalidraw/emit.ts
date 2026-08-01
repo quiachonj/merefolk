@@ -161,15 +161,7 @@ export function emitExcalidrawElements(
 	for (const r of model.relationships) {
 		const label = labels.get(r.id);
 		if (!label?.text) continue;
-		skeleton.push({
-			type: "text",
-			x: label.x,
-			y: label.y,
-			text: label.text,
-			fontSize: FONT_SIZE,
-			fontFamily: FONT,
-			strokeColor: colors.text,
-		});
+		skeleton.push(text(label.x, label.y, label.text));
 	}
 
 	return convertToExcalidrawElements(

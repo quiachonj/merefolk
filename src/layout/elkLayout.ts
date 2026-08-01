@@ -15,6 +15,19 @@ export interface EdgeLabel {
 	y: number;
 }
 
+// Fields we read from ELK's layout OUTPUT. elkjs 0.12's bundled types describe
+// the result as the input graph (no `sections`, unpositioned labels), so we
+// declare the output shape ourselves and cast — the data is present at runtime.
+interface ElkOutputEdge {
+	id: string;
+	sections?: {
+		startPoint: Point;
+		bendPoints?: Point[];
+		endPoint: Point;
+	}[];
+	labels?: (Point & { text?: string })[];
+}
+
 export interface LayoutResult {
 	entities: PositionedEntity[];
 	/** relationship id -> orthogonal polyline (absolute coords) from ELK. */
@@ -90,7 +103,7 @@ export async function layoutER(model: ERModel): Promise<LayoutResult> {
 
 	const routes = new Map<string, Point[]>();
 	const labels = new Map<string, EdgeLabel>();
-	for (const edge of laidOut.edges ?? []) {
+	for (const edge of (laidOut.edges ?? []) as unknown as ElkOutputEdge[]) {
 		const section = edge.sections?.[0];
 		if (section) {
 			routes.set(edge.id, [

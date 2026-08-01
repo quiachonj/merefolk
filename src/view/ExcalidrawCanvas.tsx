@@ -25,7 +25,6 @@ export function ExcalidrawCanvas({
 		return debounce(
 			(els: unknown, appState: unknown, files: unknown) => {
 				onPersist(
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					serializeAsJSON(
 						els as any,
 						appState as any,
@@ -43,10 +42,8 @@ export function ExcalidrawCanvas({
 		<div style={{ position: "absolute", inset: 0 }}>
 			<Excalidraw
 				theme={dark ? "dark" : "light"}
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				onChange={handleChange as any}
 				initialData={{
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					elements: initialElements as any,
 					appState: {
 						viewBackgroundColor: dark ? "#1e1e1e" : "#ffffff",

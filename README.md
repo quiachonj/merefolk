@@ -27,8 +27,16 @@ to edit, with your changes saved back and shown in the note.
   0.18 crow's-foot arrowheads).
 - **ELK layout** with orthogonal, box-avoiding **arrow routing** and **edge-label
   placement** (labels don't crowd the lines).
+- **Real table rendering** — each entity is a table: centered header, divider,
+  aligned `[keys] [type] [name]` columns (one element per cell), and subtle row
+  separators.
 - **Theme-aware** colors (light/dark), with live repaint on theme switch.
-- **Hand-drawn defaults** — Excalifont, small text, "architect" (clean) roughness.
+- **Clean defaults** — Comic Shanns (mono, easy to read), small text,
+  "architect" (clean) roughness.
+- **Edit + persist** — Open into a live Excalidraw canvas; edits save to a
+  `.excalidraw` scene and the inline render prefers it. A **Re-sync** button
+  discards edits and regenerates from the source. The scene folder is
+  configurable in the settings tab.
 - **Robust to malformed input** — unrecognized lines are flagged with a ⚠ badge
   (never silently dropped); a totally invalid block falls back to Mermaid's own
   error; non-ER Mermaid is left untouched.

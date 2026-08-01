@@ -20,14 +20,6 @@ async function ensureDir(app: App, dir: string): Promise<void> {
 	}
 }
 
-export function sceneExists(
-	app: App,
-	dir: string,
-	id: string,
-): Promise<boolean> {
-	return app.vault.adapter.exists(scenePath(dir, id));
-}
-
 /** The saved scene's elements, or null if there's no (valid) saved scene. */
 export async function loadSceneElements(
 	app: App,
