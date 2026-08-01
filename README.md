@@ -99,8 +99,9 @@ exercise every path.
 
 ## Roadmap
 
-- [ ] Settings tab for the scene-folder location.
-- [ ] "Re-sync from Mermaid" escape hatch for an edited scene.
+- [x] Settings tab for the scene-folder location.
+- [x] "Re-sync from Mermaid" escape hatch — a per-diagram button (shown only on
+      edited scenes) that discards edits and regenerates from the source.
 - [ ] Render each attribute as its own row instead of one multi-line label.
 - [ ] Swap the hand-written parser for Mermaid's own ER parser (full syntax
       fidelity, at the cost of the `mermaid` dep).

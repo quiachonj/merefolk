@@ -2,9 +2,13 @@ import {
 	Editor,
 	MarkdownPostProcessorContext,
 	MarkdownView,
+	Modal,
 	Notice,
 	Plugin,
+	PluginSettingTab,
+	Setting,
 	TFile,
+	normalizePath,
 } from "obsidian";
 // Bundled as a string by esbuild's `.css -> text` loader (see esbuild.config.mjs).
 // Excalidraw 0.18 no longer auto-injects its stylesheet, so we inject it.
@@ -13,14 +17,21 @@ import {
 	ExcalidrawERView,
 	VIEW_TYPE_ER_EXCALIDRAW,
 } from "./view/ExcalidrawERView";
-import { mermaidERToExcalidraw, type ConversionResult } from "./pipeline";
+import { mermaidERToExcalidraw } from "./pipeline";
 import { findMermaidBlocks, mermaidBlockAtLine } from "./mermaid/extractBlock";
 import { copyElementsAsSvg, elementsToSvg } from "./excalidraw/toSvg";
 import { extractSceneId, newSceneId, sceneIdComment } from "./scene/id";
-import { loadSceneElements, saveScene } from "./scene/store";
+import { deleteScene, loadSceneElements, saveScene } from "./scene/store";
 
 const NO_BLOCK_MESSAGE =
 	"Put the cursor inside a ```mermaid ER block (or select one) first.";
+
+interface MerefolkSettings {
+	/** Vault-relative folder for saved scenes; empty = default under configDir. */
+	sceneFolder: string;
+}
+
+const DEFAULT_SETTINGS: MerefolkSettings = { sceneFolder: "" };
 
 /** Everything needed to render, open, and persist one ER block. */
 interface BlockRef {
@@ -33,7 +44,12 @@ interface BlockRef {
 }
 
 export default class MerefolkPlugin extends Plugin {
+	settings: MerefolkSettings = DEFAULT_SETTINGS;
+
 	async onload(): Promise<void> {
+		await this.loadSettings();
+		this.addSettingTab(new MerefolkSettingTab(this.app, this));
+
 		// Excalidraw lazy-loads fonts + web-workers from this path at runtime.
 		// Default points at a CDN, which needs network access. For an offline
 		// build, copy dist/prod/ assets into the plugin folder and set this to
@@ -115,11 +131,13 @@ export default class MerefolkPlugin extends Plugin {
 	): Promise<void> {
 		let elements: readonly unknown[];
 		let skipped: string[];
+		let fromSaved: boolean;
 		let svg: SVGSVGElement;
 		try {
 			const res = await this.resolveElements(ref);
 			elements = res.elements;
 			skipped = res.skipped;
+			fromSaved = res.fromSaved;
 			svg = await elementsToSvg(elements);
 		} catch (err) {
 			// Not a valid ER diagram (or export failed) — leave Mermaid's render.
@@ -141,16 +159,29 @@ export default class MerefolkPlugin extends Plugin {
 		wrap.dataset.merefolkLine = String(ref.lineStart);
 		if (ref.id) wrap.dataset.merefolkId = ref.id;
 		wrap.appendChild(svg);
-		this.addOverlays(wrap, ref, elements, skipped);
+		this.addOverlays(wrap, ref, elements, skipped, fromSaved);
 	}
 
 	/** Prefer a saved (edited) scene; otherwise derive from the Mermaid source. */
-	private async resolveElements(ref: BlockRef): Promise<ConversionResult> {
+	private async resolveElements(ref: BlockRef): Promise<{
+		elements: readonly unknown[];
+		skipped: string[];
+		fromSaved: boolean;
+	}> {
 		if (ref.id) {
-			const saved = await loadSceneElements(this.app, ref.id);
-			if (saved) return { elements: saved, skipped: [] };
+			const saved = await loadSceneElements(
+				this.app,
+				this.sceneDir(),
+				ref.id,
+			);
+			if (saved) return { elements: saved, skipped: [], fromSaved: true };
 		}
-		return mermaidERToExcalidraw(ref.source);
+		const res = await mermaidERToExcalidraw(ref.source);
+		return {
+			elements: res.elements,
+			skipped: res.skipped,
+			fromSaved: false,
+		};
 	}
 
 	private addOverlays(
@@ -158,6 +189,7 @@ export default class MerefolkPlugin extends Plugin {
 		ref: BlockRef,
 		elements: readonly unknown[],
 		skipped: string[],
+		fromSaved: boolean,
 	): void {
 		// Always-visible warning (top-left) when the parser dropped lines, so an
 		// incomplete render never looks complete.
@@ -207,6 +239,35 @@ export default class MerefolkPlugin extends Plugin {
 				new Notice("Could not copy SVG");
 			}
 		});
+
+		// Escape hatch: only shown when this block is rendering a saved (edited)
+		// scene — lets the user discard edits and go back to the Mermaid source.
+		if (fromSaved && ref.id) {
+			const id = ref.id;
+			const resync = bar.createEl("button", {
+				cls: "merefolk-btn",
+				text: "Re-sync",
+				attr: {
+					type: "button",
+					"aria-label": "Discard edits and regenerate from Mermaid",
+				},
+			});
+			resync.addEventListener("click", (evt) => {
+				evt.preventDefault();
+				new ConfirmModal(this.app, {
+					title: "Re-sync from Mermaid?",
+					body:
+						"This discards your Excalidraw edits for this diagram and " +
+						"regenerates it from the Mermaid source. This can't be undone.",
+					confirmText: "Discard edits",
+					onConfirm: async () => {
+						await deleteScene(this.app, this.sceneDir(), id);
+						this.rerenderWrap(wrap);
+						new Notice("Re-synced from Mermaid");
+					},
+				}).open();
+			});
+		}
 	}
 
 	/** Re-render every inline SVG (e.g. on a theme change). */
@@ -253,7 +314,11 @@ export default class MerefolkPlugin extends Plugin {
 				id = newSceneId();
 				await this.injectSceneId(ref, id);
 			}
-			let elements = await loadSceneElements(this.app, id);
+			let elements = await loadSceneElements(
+				this.app,
+				this.sceneDir(),
+				id,
+			);
 			if (!elements) {
 				const res = await mermaidERToExcalidraw(ref.source);
 				elements = res.elements;
@@ -297,7 +362,7 @@ export default class MerefolkPlugin extends Plugin {
 
 	/** Persist a scene's JSON, then refresh any inline renders of it. */
 	async persistScene(id: string, json: string): Promise<void> {
-		await saveScene(this.app, id, json);
+		await saveScene(this.app, this.sceneDir(), id, json);
 		this.refreshInlineById(id);
 	}
 
@@ -367,5 +432,94 @@ export default class MerefolkPlugin extends Plugin {
 		styleEl.textContent = excalidrawStyles;
 		document.head.appendChild(styleEl);
 		this.register(() => styleEl.remove());
+	}
+
+	// --- Settings -------------------------------------------------------------
+
+	/** Resolved folder where scenes are saved (configured, or the default). */
+	sceneDir(): string {
+		const custom = this.settings.sceneFolder.trim();
+		return custom
+			? normalizePath(custom)
+			: `${this.app.vault.configDir}/merefolk/scenes`;
+	}
+
+	async loadSettings(): Promise<void> {
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData(),
+		);
+	}
+
+	async saveSettings(): Promise<void> {
+		await this.saveData(this.settings);
+	}
+}
+
+class MerefolkSettingTab extends PluginSettingTab {
+	constructor(
+		app: MerefolkPlugin["app"],
+		private plugin: MerefolkPlugin,
+	) {
+		super(app, plugin);
+	}
+
+	display(): void {
+		this.containerEl.empty();
+
+		new Setting(this.containerEl)
+			.setName("Scene folder")
+			.setDesc(
+				"Vault-relative folder for saved .excalidraw scenes. " +
+					"Leave empty to use the default (.obsidian/merefolk/scenes). " +
+					"Changing this does not move existing scenes.",
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder(".obsidian/merefolk/scenes")
+					.setValue(this.plugin.settings.sceneFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.sceneFolder = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+	}
+}
+
+/** Minimal confirm dialog for destructive actions (e.g. discarding edits). */
+class ConfirmModal extends Modal {
+	constructor(
+		app: MerefolkPlugin["app"],
+		private opts: {
+			title: string;
+			body: string;
+			confirmText: string;
+			onConfirm: () => void;
+		},
+	) {
+		super(app);
+	}
+
+	onOpen(): void {
+		this.titleEl.setText(this.opts.title);
+		this.contentEl.createEl("p", { text: this.opts.body });
+		const buttons = this.contentEl.createDiv({
+			cls: "modal-button-container",
+		});
+		const confirm = buttons.createEl("button", {
+			text: this.opts.confirmText,
+			cls: "mod-warning",
+		});
+		confirm.addEventListener("click", () => {
+			this.close();
+			this.opts.onConfirm();
+		});
+		const cancel = buttons.createEl("button", { text: "Cancel" });
+		cancel.addEventListener("click", () => this.close());
+	}
+
+	onClose(): void {
+		this.contentEl.empty();
 	}
 }

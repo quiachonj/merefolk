@@ -1,27 +1,40 @@
 import type { App } from "obsidian";
 
-// Edited scenes persist as `.excalidraw` JSON under the plugin's config dir, so
-// they stay out of the note tree but travel with the vault's `.obsidian` folder.
-const SCENE_DIR = "merefolk/scenes";
+// Edited scenes persist as `.excalidraw` JSON in a configurable vault folder
+// (default: under the plugin's config dir, out of the note tree). The directory
+// is passed in so the settings tab can point it elsewhere.
 
-function sceneDir(app: App): string {
-	return `${app.vault.configDir}/${SCENE_DIR}`;
+function scenePath(dir: string, id: string): string {
+	return `${dir}/${id}.excalidraw`;
 }
 
-function scenePath(app: App, id: string): string {
-	return `${sceneDir(app)}/${id}.excalidraw`;
+/** Create `dir` and any missing parents (adapter.mkdir isn't recursive). */
+async function ensureDir(app: App, dir: string): Promise<void> {
+	const parts = dir.split("/").filter(Boolean);
+	let cur = "";
+	for (const part of parts) {
+		cur = cur ? `${cur}/${part}` : part;
+		if (!(await app.vault.adapter.exists(cur))) {
+			await app.vault.adapter.mkdir(cur);
+		}
+	}
 }
 
-export function sceneExists(app: App, id: string): Promise<boolean> {
-	return app.vault.adapter.exists(scenePath(app, id));
+export function sceneExists(
+	app: App,
+	dir: string,
+	id: string,
+): Promise<boolean> {
+	return app.vault.adapter.exists(scenePath(dir, id));
 }
 
 /** The saved scene's elements, or null if there's no (valid) saved scene. */
 export async function loadSceneElements(
 	app: App,
+	dir: string,
 	id: string,
 ): Promise<readonly unknown[] | null> {
-	const path = scenePath(app, id);
+	const path = scenePath(dir, id);
 	if (!(await app.vault.adapter.exists(path))) return null;
 	try {
 		const data = JSON.parse(await app.vault.adapter.read(path));
@@ -34,12 +47,22 @@ export async function loadSceneElements(
 /** Write the serialized scene JSON, creating the scene directory as needed. */
 export async function saveScene(
 	app: App,
+	dir: string,
 	id: string,
 	json: string,
 ): Promise<void> {
-	const dir = sceneDir(app);
-	if (!(await app.vault.adapter.exists(dir))) {
-		await app.vault.adapter.mkdir(dir);
+	await ensureDir(app, dir);
+	await app.vault.adapter.write(scenePath(dir, id), json);
+}
+
+/** Delete a saved scene (used by "Re-sync from Mermaid"). No-op if absent. */
+export async function deleteScene(
+	app: App,
+	dir: string,
+	id: string,
+): Promise<void> {
+	const path = scenePath(dir, id);
+	if (await app.vault.adapter.exists(path)) {
+		await app.vault.adapter.remove(path);
 	}
-	await app.vault.adapter.write(scenePath(app, id), json);
 }
