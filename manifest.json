@@ -3,7 +3,7 @@
 	"name": "Merefolk",
 	"version": "0.0.1",
 	"minAppVersion": "1.5.0",
-	"description": "Render Mermaid entity-relationship diagrams as beautiful, editable Excalidraw drawings — crow's-foot cardinality, automatic layout, and edits that persist.",
+	"description": "Mermaid ER diagrams as native, editable Excalidraw — crow's-foot cardinality and clean layout Excalidraw's own converter can't do.",
 	"author": "Amberlogica",
 	"authorUrl": "https://merefolk.amberlogica.com",
 	"isDesktopOnly": true
