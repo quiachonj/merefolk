@@ -1,13 +1,8 @@
 import ELK from "elkjs/lib/elk.bundled.js";
-import type { EREntity, ERModel, PositionedEntity } from "../types";
+import type { ERModel, PositionedEntity } from "../types";
+import { entityMetrics } from "../metrics";
 
 const elk = new ELK();
-
-const HEADER_HEIGHT = 36;
-const ROW_HEIGHT = 24;
-const CHAR_WIDTH = 8;
-const H_PADDING = 24;
-const MAX_WIDTH = 360;
 
 export interface Point {
 	x: number;
@@ -35,30 +30,16 @@ function labelSize(text: string): { width: number; height: number } {
 	return { width: text.length * LABEL_CHAR_WIDTH + 8, height: LABEL_HEIGHT };
 }
 
-function entitySize(entity: EREntity): { width: number; height: number } {
-	const longest = Math.max(
-		entity.name.length,
-		10,
-		...entity.attributes.map(
-			(a) => a.keys.join(",").length + a.type.length + a.name.length + 4,
-		),
-	);
-	return {
-		width: Math.min(longest * CHAR_WIDTH + H_PADDING, MAX_WIDTH),
-		height: HEADER_HEIGHT + entity.attributes.length * ROW_HEIGHT + 8,
-	};
-}
-
 /**
  * Runs ELK's layered algorithm over the ER graph. Returns each entity with
  * absolute x/y + size, and the orthogonal edge routes ELK computed (which avoid
  * the boxes) so the arrows can follow them instead of cutting straight across.
  */
 export async function layoutER(model: ERModel): Promise<LayoutResult> {
-	const sized = model.entities.map((entity) => ({
-		entity,
-		...entitySize(entity),
-	}));
+	const sized = model.entities.map((entity) => {
+		const m = entityMetrics(entity);
+		return { entity, width: m.width, height: m.height };
+	});
 
 	const graph = {
 		id: "root",

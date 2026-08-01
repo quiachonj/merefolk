@@ -102,7 +102,8 @@ exercise every path.
 - [x] Settings tab for the scene-folder location.
 - [x] "Re-sync from Mermaid" escape hatch — a per-diagram button (shown only on
       edited scenes) that discards edits and regenerates from the source.
-- [ ] Render each attribute as its own row instead of one multi-line label.
+- [x] Render each attribute as its own row — a real table (centered header +
+      divider + aligned `[keys] [type] [name]` columns), one element per cell.
 - [ ] Swap the hand-written parser for Mermaid's own ER parser (full syntax
       fidelity, at the cost of the `mermaid` dep).
 - [ ] Bundle Excalidraw assets locally for offline vaults.

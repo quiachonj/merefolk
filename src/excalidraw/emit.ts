@@ -5,6 +5,7 @@ import {
 import type { Cardinality, ERModel, PositionedEntity } from "../types";
 import type { DiagramColors } from "../theme";
 import type { EdgeLabel, Point } from "../layout/elkLayout";
+import { entityMetrics } from "../metrics";
 
 // ER cardinality -> Excalidraw crow's-foot arrowhead (added in Excalidraw 0.18).
 // Excalidraw has no combined "zero" (circle) glyph, so the optional-zero
@@ -25,12 +26,11 @@ const ROUGHNESS = 0; // "architect" sloppiness
 
 /**
  * Turns positioned entities + relationships into native Excalidraw elements.
- * Entities are labelled boxes; relationships follow ELK's orthogonal routes
- * (which avoid the boxes) with crow's-foot cardinality at each end. Colors come
- * from the active theme so strokes/text read against the note background; text
- * uses Excalifont at the small size and shapes use "architect" (roughness 0).
- *
- * TODO: render each attribute as its own row instead of one multi-line label.
+ * Each entity is a table: a centered header over a divider, then one row per
+ * attribute laid out in aligned `[keys] [type] [name]` columns. Relationships
+ * follow ELK's orthogonal routes with crow's-foot cardinality at each end.
+ * Colors come from the active theme; text uses Excalifont at the small size and
+ * shapes use "architect" (roughness 0).
  */
 export function emitExcalidrawElements(
 	entities: PositionedEntity[],
@@ -43,15 +43,20 @@ export function emitExcalidrawElements(
 	// stricter than what we hand-build, so we assemble as unknown[] and cast.
 	const skeleton: unknown[] = [];
 
-	for (const e of entities) {
-		const rows = e.attributes
-			.map((a) => {
-				const key = a.keys.length ? `${a.keys.join(",")} ` : "";
-				return `${key}${a.type} ${a.name}`;
-			})
-			.join("\n");
-		const divider = "─".repeat(Math.max(e.name.length + 2, 8));
+	const text = (x: number, y: number, s: string) => ({
+		type: "text",
+		x,
+		y,
+		text: s,
+		fontSize: FONT_SIZE,
+		fontFamily: FONT,
+		strokeColor: colors.text,
+	});
 
+	for (const e of entities) {
+		const m = entityMetrics(e);
+
+		// Container box (arrows bind to this element's id).
 		skeleton.push({
 			type: "rectangle",
 			id: e.id,
@@ -62,14 +67,33 @@ export function emitExcalidrawElements(
 			strokeColor: colors.stroke,
 			backgroundColor: colors.fill,
 			roughness: ROUGHNESS,
-			label: {
-				text: rows ? `${e.name}\n${divider}\n${rows}` : e.name,
-				fontSize: FONT_SIZE,
-				fontFamily: FONT,
-				strokeColor: colors.text,
-				textAlign: "left",
-				verticalAlign: "top",
-			},
+		});
+
+		// Centered header name.
+		const headerW = e.name.length * 8;
+		skeleton.push(text(e.x + (e.width - headerW) / 2, e.y + 8, e.name));
+
+		// Divider under the header.
+		skeleton.push({
+			type: "line",
+			x: e.x,
+			y: e.y + m.headerHeight,
+			points: [
+				[0, 0],
+				[e.width, 0],
+			],
+			strokeColor: colors.stroke,
+			roughness: ROUGHNESS,
+		});
+
+		// One row per attribute: [keys] [type] [name] in aligned columns.
+		e.attributes.forEach((a, i) => {
+			const rowY = e.y + m.headerHeight + i * m.rowHeight + 4;
+			if (a.keys.length) {
+				skeleton.push(text(e.x + m.keyX, rowY, a.keys.join(",")));
+			}
+			skeleton.push(text(e.x + m.typeX, rowY, a.type));
+			skeleton.push(text(e.x + m.nameX, rowY, a.name));
 		});
 	}
 
