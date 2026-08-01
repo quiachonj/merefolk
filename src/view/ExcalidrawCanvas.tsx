@@ -52,7 +52,7 @@ export function ExcalidrawCanvas({
 						viewBackgroundColor: dark ? "#1e1e1e" : "#ffffff",
 						// Match the emitted elements so anything drawn afterward
 						// shares the same defaults.
-						currentItemFontFamily: FONT_FAMILY.Excalifont,
+						currentItemFontFamily: FONT_FAMILY["Comic Shanns"],
 						currentItemFontSize: 16, // small
 						currentItemRoughness: 0, // architect
 						currentItemArrowType: "elbow",

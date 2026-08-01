@@ -5,7 +5,7 @@ import {
 import type { Cardinality, ERModel, PositionedEntity } from "../types";
 import type { DiagramColors } from "../theme";
 import type { EdgeLabel, Point } from "../layout/elkLayout";
-import { entityMetrics } from "../metrics";
+import { entityMetrics, CHAR_WIDTH } from "../metrics";
 
 // ER cardinality -> Excalidraw crow's-foot arrowhead (added in Excalidraw 0.18).
 // Excalidraw has no combined "zero" (circle) glyph, so the optional-zero
@@ -20,7 +20,7 @@ const CROWFOOT: Record<
 	"zero-or-more": "crowfoot_many", // approx: no zero-circle glyph
 };
 
-const FONT = FONT_FAMILY.Excalifont; // hand-drawn default
+const FONT = FONT_FAMILY["Comic Shanns"]; // clean, monospace-ish, easy to read
 const FONT_SIZE = 16; // "small"
 const ROUGHNESS = 0; // "architect" sloppiness
 
@@ -70,7 +70,7 @@ export function emitExcalidrawElements(
 		});
 
 		// Centered header name.
-		const headerW = e.name.length * 8;
+		const headerW = e.name.length * CHAR_WIDTH;
 		skeleton.push(text(e.x + (e.width - headerW) / 2, e.y + 8, e.name));
 
 		// Divider under the header.
@@ -95,6 +95,22 @@ export function emitExcalidrawElements(
 			skeleton.push(text(e.x + m.typeX, rowY, a.type));
 			skeleton.push(text(e.x + m.nameX, rowY, a.name));
 		});
+
+		// Subtle separators between attribute rows (faint = stroke at low opacity).
+		for (let i = 1; i < e.attributes.length; i++) {
+			skeleton.push({
+				type: "line",
+				x: e.x,
+				y: e.y + m.headerHeight + i * m.rowHeight,
+				points: [
+					[0, 0],
+					[e.width, 0],
+				],
+				strokeColor: colors.stroke,
+				opacity: 25,
+				roughness: ROUGHNESS,
+			});
+		}
 	}
 
 	// Arrows follow ELK's orthogonal route. An explicit x/y origin + points is

@@ -3,7 +3,9 @@ import type { EREntity } from "./types";
 // Shared geometry for entity boxes so the layout (which sizes the box) and the
 // emit step (which places the header + attribute columns inside it) always agree.
 
-const CHAR_WIDTH = 8; // approx Excalifont advance at 16px
+// Approx advance at 16px. Comic Shanns (mono) is wider than Excalifont, so
+// columns need more room — tune here if text crowds a column.
+export const CHAR_WIDTH = 9.6;
 const HEADER_HEIGHT = 34;
 const ROW_HEIGHT = 24;
 const PAD_X = 12;
