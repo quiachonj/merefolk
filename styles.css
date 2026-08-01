@@ -55,3 +55,18 @@
 	color: var(--text-normal);
 	background: var(--interactive-hover);
 }
+
+/* Always-visible warning when the parser skipped lines. */
+.merefolk-warn {
+	position: absolute;
+	top: var(--size-4-2, 8px);
+	left: var(--size-4-2, 8px);
+	z-index: 10;
+	padding: 2px 8px;
+	font-size: var(--font-ui-smaller, 12px);
+	color: var(--text-on-accent, #fff);
+	background: var(--text-warning, #d08770);
+	border: none;
+	border-radius: var(--radius-s, 4px);
+	cursor: pointer;
+}

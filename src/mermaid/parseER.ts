@@ -54,6 +54,7 @@ export function parseMermaidER(source: string): ERModel {
 		return e;
 	};
 
+	const skipped: string[] = [];
 	let current: EREntity | null = null;
 	let relCount = 0;
 
@@ -67,16 +68,20 @@ export function parseMermaidER(source: string): ERModel {
 				current = null;
 				continue;
 			}
-			const m = line.match(ATTR_RE);
-			if (m) {
+			const attr = line.match(ATTR_RE);
+			if (attr) {
 				current.attributes.push({
-					type: m[1].trim(),
-					name: m[2],
-					keys: m[3] ? m[3].trim().split(/\s+/) : [],
-					comment: m[4],
+					type: attr[1].trim(),
+					name: attr[2],
+					keys: attr[3] ? attr[3].trim().split(/\s+/) : [],
+					comment: attr[4],
 				});
+				continue;
 			}
-			continue;
+			// Not an attribute: the block was likely left unclosed. Close it and
+			// re-handle this line at the top level rather than swallowing the
+			// rest of the diagram as bogus attributes.
+			current = null;
 		}
 
 		const open = line.match(ENTITY_OPEN_RE);
@@ -102,11 +107,16 @@ export function parseMermaidER(source: string): ERModel {
 				label: label && label !== ":" ? label : undefined,
 				identifying: connector === "--",
 			});
+			continue;
 		}
+
+		// Nothing matched — record it so the UI can warn about it.
+		skipped.push(line);
 	}
 
 	return {
 		entities: [...entities.values()],
 		relationships,
+		skipped,
 	};
 }

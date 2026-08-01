@@ -13,7 +13,7 @@ import {
 	ExcalidrawERView,
 	VIEW_TYPE_ER_EXCALIDRAW,
 } from "./view/ExcalidrawERView";
-import { mermaidERToExcalidraw } from "./pipeline";
+import { mermaidERToExcalidraw, type ConversionResult } from "./pipeline";
 import { findMermaidBlocks, mermaidBlockAtLine } from "./mermaid/extractBlock";
 import { copyElementsAsSvg, elementsToSvg } from "./excalidraw/toSvg";
 import { extractSceneId, newSceneId, sceneIdComment } from "./scene/id";
@@ -114,9 +114,12 @@ export default class MerefolkPlugin extends Plugin {
 		ref: BlockRef,
 	): Promise<void> {
 		let elements: readonly unknown[];
+		let skipped: string[];
 		let svg: SVGSVGElement;
 		try {
-			elements = await this.resolveElements(ref);
+			const res = await this.resolveElements(ref);
+			elements = res.elements;
+			skipped = res.skipped;
 			svg = await elementsToSvg(elements);
 		} catch (err) {
 			// Not a valid ER diagram (or export failed) — leave Mermaid's render.
@@ -138,23 +141,42 @@ export default class MerefolkPlugin extends Plugin {
 		wrap.dataset.merefolkLine = String(ref.lineStart);
 		if (ref.id) wrap.dataset.merefolkId = ref.id;
 		wrap.appendChild(svg);
-		this.addRenderButtons(wrap, ref, elements);
+		this.addOverlays(wrap, ref, elements, skipped);
 	}
 
 	/** Prefer a saved (edited) scene; otherwise derive from the Mermaid source. */
-	private async resolveElements(ref: BlockRef): Promise<readonly unknown[]> {
+	private async resolveElements(ref: BlockRef): Promise<ConversionResult> {
 		if (ref.id) {
 			const saved = await loadSceneElements(this.app, ref.id);
-			if (saved) return saved;
+			if (saved) return { elements: saved, skipped: [] };
 		}
 		return mermaidERToExcalidraw(ref.source);
 	}
 
-	private addRenderButtons(
+	private addOverlays(
 		wrap: HTMLElement,
 		ref: BlockRef,
 		elements: readonly unknown[],
+		skipped: string[],
 	): void {
+		// Always-visible warning (top-left) when the parser dropped lines, so an
+		// incomplete render never looks complete.
+		if (skipped.length) {
+			const warn = wrap.createEl("button", {
+				cls: "merefolk-warn",
+				text: `⚠ ${skipped.length}`,
+				attr: {
+					type: "button",
+					"aria-label": `${skipped.length} line(s) not recognized`,
+					title: `Not recognized — render may be incomplete:\n${skipped.join("\n")}`,
+				},
+			});
+			warn.addEventListener("click", (evt) => {
+				evt.preventDefault();
+				this.warnSkipped(skipped);
+			});
+		}
+
 		const bar = wrap.createDiv({ cls: "merefolk-btn-bar" });
 
 		const open = bar.createEl("button", {
@@ -231,8 +253,12 @@ export default class MerefolkPlugin extends Plugin {
 				id = newSceneId();
 				await this.injectSceneId(ref, id);
 			}
-			const saved = await loadSceneElements(this.app, id);
-			const elements = saved ?? (await mermaidERToExcalidraw(ref.source));
+			let elements = await loadSceneElements(this.app, id);
+			if (!elements) {
+				const res = await mermaidERToExcalidraw(ref.source);
+				elements = res.elements;
+				if (res.skipped.length) this.warnSkipped(res.skipped);
+			}
 			await this.openElements(elements, id);
 		} catch (err) {
 			console.error("[merefolk]", err);
@@ -275,6 +301,13 @@ export default class MerefolkPlugin extends Plugin {
 		this.refreshInlineById(id);
 	}
 
+	private warnSkipped(skipped: string[]): void {
+		new Notice(
+			`Merefolk skipped ${skipped.length} unrecognized line(s):\n` +
+				skipped.join("\n"),
+		);
+	}
+
 	// --- Editor command / ribbon (ephemeral, no persistence) ------------------
 
 	private async convertFromEditor(editor: Editor): Promise<void> {
@@ -306,7 +339,8 @@ export default class MerefolkPlugin extends Plugin {
 
 	private async openWithDiagram(source: string): Promise<void> {
 		try {
-			const elements = await mermaidERToExcalidraw(source);
+			const { elements, skipped } = await mermaidERToExcalidraw(source);
+			if (skipped.length) this.warnSkipped(skipped);
 			await this.openElements(elements);
 		} catch (err) {
 			console.error("[merefolk]", err);

@@ -33,6 +33,8 @@ export interface ERRelationship {
 export interface ERModel {
 	entities: EREntity[];
 	relationships: ERRelationship[];
+	/** Non-blank, non-comment lines the parser did not recognize. */
+	skipped: string[];
 }
 
 export interface PositionedEntity extends EREntity {
