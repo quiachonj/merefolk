@@ -1,0 +1,10 @@
+{
+	"id": "merefolk",
+	"name": "Merefolk",
+	"version": "0.0.1",
+	"minAppVersion": "1.5.0",
+	"description": "Turn Mermaid ER diagrams into native, editable Excalidraw drawings — the entity-relationship support Excalidraw's own converter leaves out.",
+	"author": "Amberlogica",
+	"authorUrl": "https://merefolk.amberlogica.com",
+	"isDesktopOnly": true
+}

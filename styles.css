@@ -1,0 +1,45 @@
+/* Plugin-owned styles. Obsidian auto-loads this file. */
+/* Excalidraw's own stylesheet is injected at runtime from main.ts. */
+
+.merefolk-er-view {
+	padding: 0;
+	position: relative;
+	/* Fallback height in case the flex parent doesn't propagate one. */
+	min-height: 400px;
+	height: 100%;
+}
+
+.merefolk-er-view .excalidraw {
+	height: 100%;
+}
+
+/* Hover "Excalidraw" button on rendered Mermaid ER blocks. */
+.merefolk-mermaid-host {
+	position: relative;
+}
+
+.merefolk-convert-btn {
+	position: absolute;
+	top: var(--size-4-2, 8px);
+	right: var(--size-4-2, 8px);
+	z-index: 10;
+	padding: 2px 8px;
+	font-size: var(--font-ui-smaller, 12px);
+	color: var(--text-muted);
+	background: var(--interactive-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s, 4px);
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 120ms ease;
+}
+
+.merefolk-mermaid-host:hover .merefolk-convert-btn,
+.merefolk-convert-btn:focus-visible {
+	opacity: 1;
+}
+
+.merefolk-convert-btn:hover {
+	color: var(--text-normal);
+	background: var(--interactive-hover);
+}
