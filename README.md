@@ -81,15 +81,21 @@ npm run build    # type-check + production bundle
       (selection wins; single-block notes still auto-resolve).
 - [x] Native **crow's-foot** cardinality endpoints per side (needs Excalidraw
       0.18+). Optional-zero variants approximate (no combined circle glyph).
-- [x] Default all text to the **Code** (Cascadia) font.
-- [x] Hover **"Excalidraw" button** on rendered Mermaid ER blocks (Reading view /
-      Live Preview) that converts just that block — via a markdown post-processor
-      using `ctx.getSectionInfo` to read the block's source.
+- [x] Element defaults: **Excalifont**, small font size, **elbow arrows**,
+      "architect" (roughness 0) sloppiness — in `emit.ts` + view `appState`.
 - [x] Trim bundle 10 MB -> 6.5 MB: alias out Excalidraw's built-in
       `@excalidraw/mermaid-to-excalidraw` dialog dep (cytoscape/katex) and drop
       the unused `mermaid` dependency. See `src/stubs/` + esbuild `alias`.
+- [x] **Feature 2 (Phase 1): inline SVG render.** A markdown post-processor
+      replaces rendered Mermaid ER blocks with a beautiful Excalidraw
+      `exportToSvg` (fonts auto-inlined), plus a top-right hover **Open** /
+      **Copy** button group. Falls back to Mermaid on error. See `toSvg.ts` +
+      `main.ts` (`renderErBlock`).
+- [ ] **Feature 1 (Phase 2): edit + persist.** Open button already opens the
+      editable canvas; next: stable block id (`%% merefolk:<id>`), save the
+      edited scene to a `.excalidraw` file, and make the inline SVG prefer the
+      saved scene. Source of truth: Mermaid until first edit, then `.excalidraw`.
 - [ ] Render each attribute as its own row instead of one multi-line label.
-- [ ] Persist the drawing to a `.excalidraw` file instead of an ephemeral view.
 - [ ] Swap the hand-written parser for Mermaid's own ER parser for full syntax
       coverage (aliases, quoted names, generics).
 - [ ] Bundle Excalidraw assets locally for offline vaults.

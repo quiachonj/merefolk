@@ -9,6 +9,32 @@ const CHAR_WIDTH = 8;
 const H_PADDING = 24;
 const MAX_WIDTH = 360;
 
+export interface Point {
+	x: number;
+	y: number;
+}
+
+export interface EdgeLabel {
+	text: string;
+	x: number;
+	y: number;
+}
+
+export interface LayoutResult {
+	entities: PositionedEntity[];
+	/** relationship id -> orthogonal polyline (absolute coords) from ELK. */
+	routes: Map<string, Point[]>;
+	/** relationship id -> label placed by ELK (absolute top-left). */
+	labels: Map<string, EdgeLabel>;
+}
+
+const LABEL_CHAR_WIDTH = 8;
+const LABEL_HEIGHT = 20;
+
+function labelSize(text: string): { width: number; height: number } {
+	return { width: text.length * LABEL_CHAR_WIDTH + 8, height: LABEL_HEIGHT };
+}
+
 function entitySize(entity: EREntity): { width: number; height: number } {
 	const longest = Math.max(
 		entity.name.length,
@@ -24,11 +50,11 @@ function entitySize(entity: EREntity): { width: number; height: number } {
 }
 
 /**
- * Runs ELK's layered algorithm over the ER graph and returns each entity with
- * absolute x/y and its computed box size. ELK gives us far cleaner orthogonal
- * placement for ER graphs than Mermaid's built-in dagre layout.
+ * Runs ELK's layered algorithm over the ER graph. Returns each entity with
+ * absolute x/y + size, and the orthogonal edge routes ELK computed (which avoid
+ * the boxes) so the arrows can follow them instead of cutting straight across.
  */
-export async function layoutER(model: ERModel): Promise<PositionedEntity[]> {
+export async function layoutER(model: ERModel): Promise<LayoutResult> {
 	const sized = model.entities.map((entity) => ({
 		entity,
 		...entitySize(entity),
@@ -39,9 +65,18 @@ export async function layoutER(model: ERModel): Promise<PositionedEntity[]> {
 		layoutOptions: {
 			"elk.algorithm": "layered",
 			"elk.direction": "RIGHT",
-			"elk.layered.spacing.nodeNodeBetweenLayers": "90",
-			"elk.spacing.nodeNode": "60",
 			"elk.edgeRouting": "ORTHOGONAL",
+			// Generous spacing: the inline SVG scales down to fit the note, so a
+			// roomy layout reads as a cohesive, zoomed-out whole. Cramming only
+			// hurts label + crow's-foot legibility.
+			"elk.layered.spacing.nodeNodeBetweenLayers": "110",
+			"elk.spacing.nodeNode": "80",
+			"elk.spacing.edgeNode": "25",
+			"elk.spacing.edgeEdge": "15",
+			// Let ELK reserve space for and position the relationship labels so
+			// they don't crowd the lines or boxes.
+			"elk.edgeLabels.inline": "false",
+			"elk.spacing.edgeLabel": "6",
 		},
 		children: sized.map((s) => ({
 			id: s.entity.id,
@@ -52,13 +87,16 @@ export async function layoutER(model: ERModel): Promise<PositionedEntity[]> {
 			id: r.id,
 			sources: [r.leftEntity],
 			targets: [r.rightEntity],
+			...(r.label
+				? { labels: [{ text: r.label, ...labelSize(r.label) }] }
+				: {}),
 		})),
 	};
 
 	const laidOut = await elk.layout(graph);
-	const byId = new Map((laidOut.children ?? []).map((c) => [c.id, c]));
 
-	return sized.map((s) => {
+	const byId = new Map((laidOut.children ?? []).map((c) => [c.id, c]));
+	const entities = sized.map((s) => {
 		const node = byId.get(s.entity.id);
 		return {
 			...s.entity,
@@ -68,4 +106,27 @@ export async function layoutER(model: ERModel): Promise<PositionedEntity[]> {
 			height: s.height,
 		};
 	});
+
+	const routes = new Map<string, Point[]>();
+	const labels = new Map<string, EdgeLabel>();
+	for (const edge of laidOut.edges ?? []) {
+		const section = edge.sections?.[0];
+		if (section) {
+			routes.set(edge.id, [
+				section.startPoint,
+				...(section.bendPoints ?? []),
+				section.endPoint,
+			]);
+		}
+		const label = edge.labels?.[0];
+		if (label && label.x != null && label.y != null) {
+			labels.set(edge.id, {
+				text: label.text ?? "",
+				x: label.x,
+				y: label.y,
+			});
+		}
+	}
+
+	return { entities, routes, labels };
 }

@@ -5,8 +5,14 @@ import { ExcalidrawCanvas } from "./ExcalidrawCanvas";
 
 export const VIEW_TYPE_ER_EXCALIDRAW = "merefolk-er-view";
 
+/** Minimal surface the view needs to persist edits (implemented by the plugin). */
+export interface ScenePersister {
+	persistScene(id: string, json: string): void | Promise<void>;
+}
+
 interface ERViewState {
 	elements?: readonly unknown[];
+	sceneId?: string | null;
 }
 
 /**
@@ -16,8 +22,12 @@ interface ERViewState {
 export class ExcalidrawERView extends ItemView {
 	private root: Root | null = null;
 	private elements: readonly unknown[] = [];
+	private sceneId: string | null = null;
 
-	constructor(leaf: WorkspaceLeaf) {
+	constructor(
+		leaf: WorkspaceLeaf,
+		private persister: ScenePersister,
+	) {
 		super(leaf);
 	}
 
@@ -34,10 +44,9 @@ export class ExcalidrawERView extends ItemView {
 	}
 
 	async setState(state: ERViewState, result: ViewStateResult): Promise<void> {
-		if (state?.elements) {
-			this.elements = state.elements;
-			this.renderCanvas();
-		}
+		if (state?.elements) this.elements = state.elements;
+		if (state?.sceneId !== undefined) this.sceneId = state.sceneId ?? null;
+		this.renderCanvas();
 		return super.setState(state, result);
 	}
 
@@ -58,9 +67,18 @@ export class ExcalidrawERView extends ItemView {
 		if (!this.root) {
 			this.root = createRoot(this.contentEl);
 		}
+		const id = this.sceneId;
 		this.root.render(
 			<StrictMode>
-				<ExcalidrawCanvas initialElements={this.elements} />
+				<ExcalidrawCanvas
+					initialElements={this.elements}
+					onPersist={
+						id
+							? (json) =>
+									void this.persister.persistScene(id, json)
+							: undefined
+					}
+				/>
 			</StrictMode>,
 		);
 	}

@@ -17,7 +17,7 @@
 		"mermaid",
 		"er-diagram"
 	],
-	"author": "Josh",
+	"author": "Amberlogica",
 	"license": "MIT",
 	"dependencies": {
 		"@excalidraw/excalidraw": "^0.18.1",

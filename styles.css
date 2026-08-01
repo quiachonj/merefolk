@@ -13,16 +13,35 @@
 	height: 100%;
 }
 
-/* Hover "Excalidraw" button on rendered Mermaid ER blocks. */
-.merefolk-mermaid-host {
+/* Inline Excalidraw SVG render of a Mermaid ER block, with Open/Copy buttons. */
+.merefolk-render {
 	position: relative;
+	display: flex;
+	justify-content: center;
 }
 
-.merefolk-convert-btn {
+.merefolk-svg {
+	max-width: 100%;
+	height: auto;
+}
+
+.merefolk-btn-bar {
 	position: absolute;
 	top: var(--size-4-2, 8px);
 	right: var(--size-4-2, 8px);
 	z-index: 10;
+	display: flex;
+	gap: var(--size-4-1, 4px);
+	opacity: 0;
+	transition: opacity 120ms ease;
+}
+
+.merefolk-render:hover .merefolk-btn-bar,
+.merefolk-btn-bar:focus-within {
+	opacity: 1;
+}
+
+.merefolk-btn {
 	padding: 2px 8px;
 	font-size: var(--font-ui-smaller, 12px);
 	color: var(--text-muted);
@@ -30,16 +49,9 @@
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s, 4px);
 	cursor: pointer;
-	opacity: 0;
-	transition: opacity 120ms ease;
 }
 
-.merefolk-mermaid-host:hover .merefolk-convert-btn,
-.merefolk-convert-btn:focus-visible {
-	opacity: 1;
-}
-
-.merefolk-convert-btn:hover {
+.merefolk-btn:hover {
 	color: var(--text-normal);
 	background: var(--interactive-hover);
 }
