@@ -3,7 +3,7 @@
 	"name": "Merefolk",
 	"version": "0.0.1",
 	"minAppVersion": "1.5.0",
-	"description": "Turn MERmaid Entity-Relationship(MerE) diagrams into native, editable Excalidraw drawings — the entity-relationship support Excalidraw's own converter leaves out.",
+	"description": "Render Mermaid entity-relationship diagrams as beautiful, editable Excalidraw drawings — crow's-foot cardinality, automatic layout, and edits that persist.",
 	"author": "Amberlogica",
 	"authorUrl": "https://merefolk.amberlogica.com",
 	"isDesktopOnly": true

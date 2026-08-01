@@ -1,103 +1,109 @@
 # Merefolk
 
-An Obsidian plugin that converts Mermaid **entity-relationship** diagrams into
-**native, editable Excalidraw** drawings — not the rasterized image fallback you
-get from `@excalidraw/mermaid-to-excalidraw` (which
+An Obsidian plugin that renders Mermaid **entity-relationship** diagrams as
+beautiful, **editable Excalidraw** drawings — not the rasterized image fallback
+you get from `@excalidraw/mermaid-to-excalidraw` (which
 [does not natively support ER diagrams](https://github.com/excalidraw/mermaid-to-excalidraw/issues/59)).
 
-The canvas is **self-rendered** with `@excalidraw/excalidraw`, so this plugin
-does **not** depend on the standalone Obsidian Excalidraw plugin.
+Write a normal ```mermaid `erDiagram` block. Merefolk replaces it inline with a
+hand-drawn Excalidraw render — crow's-foot cardinality, clean orthogonal
+routing, non-crowding labels — and lets you open it in a full Excalidraw canvas
+to edit, with your changes saved back and shown in the note.
+
+## Two features
+
+1. **Render** — in Reading view / Live Preview, an `erDiagram` block is replaced
+   by a self-contained Excalidraw SVG (fonts inlined), with a hover **Open** /
+   **Copy** button group. It scales down to fit the note and repaints on a
+   light/dark theme change.
+2. **Edit + persist** — **Open** launches the diagram in a live, editable
+   Excalidraw canvas. Edits are saved to a companion `.excalidraw` scene and the
+   inline render prefers that saved scene from then on. The Mermaid text is the
+   source of truth until your first edit; after that, the saved scene is.
+
+## Highlights
+
+- **Native crow's-foot cardinality** per side (`||`, `|o`, `o{`, `}o` → Excalidraw
+  0.18 crow's-foot arrowheads).
+- **ELK layout** with orthogonal, box-avoiding **arrow routing** and **edge-label
+  placement** (labels don't crowd the lines).
+- **Theme-aware** colors (light/dark), with live repaint on theme switch.
+- **Hand-drawn defaults** — Excalifont, small text, "architect" (clean) roughness.
+- **Robust to malformed input** — unrecognized lines are flagged with a ⚠ badge
+  (never silently dropped); a totally invalid block falls back to Mermaid's own
+  error; non-ER Mermaid is left untouched.
+- **Three entry points** — the inline **Open** button, a command, and a ribbon icon.
 
 ## Pipeline
 
 ```
-Mermaid `erDiagram` source
-  └─ src/mermaid/parseER.ts   parse -> ERModel   (entities, attributes, relationships)
-     └─ src/layout/elkLayout.ts   ELK layered layout -> positioned entities
-        └─ src/excalidraw/emit.ts   -> native Excalidraw elements
-           └─ src/view/*   React root hosting <Excalidraw> inside an Obsidian ItemView
+Mermaid `erDiagram`
+  └─ src/mermaid/parseER.ts     parse -> ERModel (+ skipped lines)
+     └─ src/layout/elkLayout.ts   ELK layered layout -> positions, edge routes, label positions
+        └─ src/excalidraw/emit.ts   -> native Excalidraw elements (theme colors, crow's-foot)
+           ├─ src/excalidraw/toSvg.ts   exportToSvg -> inline render (Feature 2)
+           └─ src/view/*               React canvas in an ItemView -> edit + persist (Feature 1)
 ```
 
-Entry point: `src/main.ts` (command + ribbon icon → opens the ER view).
+Scene persistence: `src/scene/` (stable `%% merefolk:<id>` block id + `.excalidraw`
+files under `.obsidian/merefolk/scenes/`).
 
-## Develop
+## Install (development)
+
+Merefolk isn't in the community store yet. To run it from source:
 
 ```bash
 npm install
 npm run dev      # esbuild watch -> main.js
 ```
 
-Symlink (or clone) this folder into a test vault so Obsidian loads it:
-
-```bash
-# from this folder, into your vault's plugin dir
-ln -s "$PWD" "/path/to/Vault/.obsidian/plugins/mermaid-er-excalidraw"
-```
-
-On Windows (PowerShell, admin):
+Symlink (or junction) this repo into a test vault's plugins folder so Obsidian
+loads it, then enable **Merefolk** under Settings → Community plugins:
 
 ```powershell
-New-Item -ItemType SymbolicLink -Path "C:\path\to\Vault\.obsidian\plugins\mermaid-er-excalidraw" -Target (Get-Location)
+# Windows (no admin needed): junction the repo into the vault
+New-Item -ItemType Junction -Path "C:\path\to\Vault\.obsidian\plugins\merefolk" -Target (Get-Location)
 ```
-
-Then enable **Mermaid ER to Excalidraw** in Settings → Community plugins, and run
-the command **"Convert selected Mermaid ER diagram to Excalidraw"** with an
-`erDiagram` block selected.
 
 ```bash
 npm run build    # type-check + production bundle
 ```
 
-## Gotchas already handled in this scaffold
+Open `test/sample-er.md` (which also contains malformed/edge-case fixtures) to
+exercise every path.
 
-1. **Excalidraw 0.18 build wiring** — 0.18 ships conditional exports (prod/dev),
-   and its CSS subpath (`@excalidraw/excalidraw/index.css`) has no `default`
-   condition, so `esbuild.config.mjs` pins `conditions: ["production"]`. Unlike
-   0.17, 0.18 does NOT auto-inject its stylesheet, so it's imported in `main.ts`,
-   bundled as a string via the `.css -> text` loader, and injected as a `<style>`
-   tag at runtime. `src/globals.d.ts` declares `*.css` so `tsc` is happy.
+## Hard-won implementation notes
 
-2. **Asset path** — Excalidraw lazy-loads fonts/workers at runtime. The scaffold
-   sets `window.EXCALIDRAW_ASSET_PATH` to a CDN (`.../dist/prod/`) so it renders
-   out of the box **(requires network)**. For offline use, copy
-   `node_modules/@excalidraw/excalidraw/dist/prod/` assets into the plugin folder
-   at build time and point `EXCALIDRAW_ASSET_PATH` at that local path.
+> [!IMPORTANT]
+> Requires **Excalidraw 0.18+** — crow's-foot arrowheads (`crowfoot_one` /
+> `crowfoot_many` / `crowfoot_one_or_many`) don't exist before it.
 
-3. **Bound arrows need an explicit `x`/`y`** — `convertToExcalidrawElements`
-   derives `NaN` geometry for an arrow that only has `start`/`end` bindings and
-   no origin. That NaN propagates to a `NaN` scene bounding box → `NaN` zoom →
-   `RangeError: Maximum call stack size exceeded`. `emit.ts` gives every arrow an
-   `x`/`y` and `points` computed from the entity boxes.
+1. **0.18 build wiring** — 0.18 ships conditional exports and its CSS subpath has
+   no `default` condition, so `esbuild.config.mjs` pins `conditions: ["production"]`.
+   0.18 does NOT auto-inject its stylesheet, so it's imported and bundled as a
+   string via the `.css -> text` loader, then injected at runtime (`src/globals.d.ts`
+   declares `*.css`).
+2. **Bound arrows need explicit `x`/`y` + points** — otherwise
+   `convertToExcalidrawElements` derives `NaN` geometry, which cascades to a `NaN`
+   zoom and a call-stack overflow. Arrows use ELK's route points.
+3. **`elbowed` doesn't route in a static export** — elbow routing is
+   interaction-time only. We use ELK's orthogonal `edge.sections` for the arrow
+   points instead.
+4. **Load scenes via `initialData`** on a fresh mount, never `setState` from the
+   `excalidrawAPI` render-phase callback (infinite render loop).
+5. **Theme:** colors are baked per active theme (a fixed dark stroke is invisible
+   on a dark background); inline renders re-derive on the `css-change` event.
+6. **Bundle:** aliased out Excalidraw's built-in `@excalidraw/mermaid-to-excalidraw`
+   dialog dep (cytoscape/katex, ~6 MB) via `src/stubs/` — it's only lazily
+   imported and we never open that dialog.
 
-4. **Load via `initialData`, not `updateScene`** — the scene is loaded through
-   `initialData` on a fresh mount, and the canvas component holds no React state
-   of its own. Calling `setState` from Excalidraw's `excalidrawAPI` render-phase
-   callback can trigger an infinite render loop.
+## Roadmap
 
-## Roadmap / TODO
-
-- [x] End-to-end: parse `erDiagram` -> ELK layout -> native Excalidraw scene.
-- [x] Scope conversion to the single ```mermaid block under the cursor
-      (selection wins; single-block notes still auto-resolve).
-- [x] Native **crow's-foot** cardinality endpoints per side (needs Excalidraw
-      0.18+). Optional-zero variants approximate (no combined circle glyph).
-- [x] Element defaults: **Excalifont**, small font size, **elbow arrows**,
-      "architect" (roughness 0) sloppiness — in `emit.ts` + view `appState`.
-- [x] Trim bundle 10 MB -> 6.5 MB: alias out Excalidraw's built-in
-      `@excalidraw/mermaid-to-excalidraw` dialog dep (cytoscape/katex) and drop
-      the unused `mermaid` dependency. See `src/stubs/` + esbuild `alias`.
-- [x] **Feature 2 (Phase 1): inline SVG render.** A markdown post-processor
-      replaces rendered Mermaid ER blocks with a beautiful Excalidraw
-      `exportToSvg` (fonts auto-inlined), plus a top-right hover **Open** /
-      **Copy** button group. Falls back to Mermaid on error. See `toSvg.ts` +
-      `main.ts` (`renderErBlock`).
-- [ ] **Feature 1 (Phase 2): edit + persist.** Open button already opens the
-      editable canvas; next: stable block id (`%% merefolk:<id>`), save the
-      edited scene to a `.excalidraw` file, and make the inline SVG prefer the
-      saved scene. Source of truth: Mermaid until first edit, then `.excalidraw`.
+- [ ] Settings tab for the scene-folder location.
+- [ ] "Re-sync from Mermaid" escape hatch for an edited scene.
 - [ ] Render each attribute as its own row instead of one multi-line label.
-- [ ] Swap the hand-written parser for Mermaid's own ER parser for full syntax
-      coverage (aliases, quoted names, generics).
+- [ ] Swap the hand-written parser for Mermaid's own ER parser (full syntax
+      fidelity, at the cost of the `mermaid` dep).
 - [ ] Bundle Excalidraw assets locally for offline vaults.
 - [ ] Unit tests for `parseER` / `elkLayout` (Vitest).
 

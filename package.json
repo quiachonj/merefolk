@@ -1,7 +1,7 @@
 {
 	"name": "merefolk",
 	"version": "0.0.1",
-	"description": "Turn Mermaid ER diagrams into native, editable Excalidraw drawings inside Obsidian — the entity-relationship support Excalidraw's own converter leaves out.",
+	"description": "Obsidian plugin that renders Mermaid entity-relationship diagrams as beautiful, editable Excalidraw drawings — crow's-foot cardinality, automatic ELK layout, theme-aware, with edits that persist. The ER support Excalidraw's own converter leaves out.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
