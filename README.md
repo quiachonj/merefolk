@@ -5,6 +5,9 @@ beautiful, **editable Excalidraw** drawings — not the rasterized image fallbac
 you get from `@excalidraw/mermaid-to-excalidraw` (which
 [does not natively support ER diagrams](https://github.com/excalidraw/mermaid-to-excalidraw/issues/59)).
 
+**Website:** [merefolk.amberlogica.com](https://merefolk.amberlogica.com/) ·
+**Support:** [Buy me a coffee](https://buymeacoffee.com/joshquiachon) ☕
+
 Write a normal ```mermaid `erDiagram` block. Merefolk replaces it inline with a
 hand-drawn Excalidraw render — crow's-foot cardinality, clean orthogonal
 routing, non-crowding labels — and lets you open it in a full Excalidraw canvas
@@ -116,6 +119,13 @@ exercise every path.
       fidelity, at the cost of the `mermaid` dep).
 - [ ] Bundle Excalidraw assets locally for offline vaults.
 - [ ] Unit tests for `parseER` / `elkLayout` (Vitest).
+
+## Support
+
+If Merefolk is useful to you, you can support development:
+
+- ☕ [Buy me a coffee](https://buymeacoffee.com/joshquiachon)
+- 🌐 [merefolk.amberlogica.com](https://merefolk.amberlogica.com/)
 
 ## License
 

@@ -5,7 +5,7 @@
 	"minAppVersion": "1.5.0",
 	"description": "Mermaid ER diagrams as native, editable Excalidraw — crow's-foot cardinality and clean layout.",
 	"author": "Amberlogica",
-	"authorUrl": "https://github.com/quiachonj/merefolk",
+	"authorUrl": "https://www.amberlogica.com",
 	"fundingUrl": "https://buymeacoffee.com/joshquiachon",
 	"isDesktopOnly": true
 }

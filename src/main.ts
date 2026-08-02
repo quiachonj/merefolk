@@ -7,6 +7,7 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	SettingDefinitionItem,
 	TFile,
 	normalizePath,
 } from "obsidian";
@@ -459,17 +460,21 @@ class MerefolkSettingTab extends PluginSettingTab {
 		super(app, plugin);
 	}
 
+	private sceneFolderDesc(): string {
+		return (
+			"Vault-relative folder for saved .excalidraw scenes. " +
+			`Leave empty to use the default (${this.plugin.defaultSceneFolder()}). ` +
+			"Changing this does not move existing scenes."
+		);
+	}
+
 	display(): void {
 		this.containerEl.empty();
 
 		const defaultDir = this.plugin.defaultSceneFolder();
 		new Setting(this.containerEl)
 			.setName("Scene folder")
-			.setDesc(
-				"Vault-relative folder for saved .excalidraw scenes. " +
-					`Leave empty to use the default (${defaultDir}). ` +
-					"Changing this does not move existing scenes.",
-			)
+			.setDesc(this.sceneFolderDesc())
 			.addText((text) =>
 				text
 					.setPlaceholder(defaultDir)
@@ -479,6 +484,24 @@ class MerefolkSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}),
 			);
+	}
+
+	// Declarative mirror of display(). display() still renders the UI on every
+	// supported version (minAppVersion 1.5.0); this method is called on 1.13.0+
+	// only for search indexing, so the Scene folder setting is discoverable via
+	// Obsidian's settings search. Keep the two in sync.
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		return [
+			{
+				name: "Scene folder",
+				desc: this.sceneFolderDesc(),
+				control: {
+					type: "text",
+					key: "sceneFolder",
+					placeholder: this.plugin.defaultSceneFolder(),
+				},
+			},
+		];
 	}
 }
 
