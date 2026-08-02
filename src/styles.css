@@ -1,0 +1,78 @@
+/* Merefolk plugin styles. The build concatenates Excalidraw's stylesheet in
+   front of this into the root styles.css that Obsidian auto-loads. */
+
+.merefolk-er-view {
+	padding: 0;
+	position: relative;
+	/* Fallback height in case the flex parent doesn't propagate one. */
+	min-height: 400px;
+	height: 100%;
+}
+
+.merefolk-er-view .excalidraw {
+	height: 100%;
+}
+
+/* Fills the view so Excalidraw measures a real pixel size. */
+.merefolk-canvas-fill {
+	position: absolute;
+	inset: 0;
+}
+
+/* Inline Excalidraw SVG render of a Mermaid ER block, with Open/Copy buttons. */
+.merefolk-render {
+	position: relative;
+	display: flex;
+	justify-content: center;
+}
+
+.merefolk-svg {
+	max-width: 100%;
+	height: auto;
+}
+
+.merefolk-btn-bar {
+	position: absolute;
+	top: var(--size-4-2, 8px);
+	right: var(--size-4-2, 8px);
+	z-index: 10;
+	display: flex;
+	gap: var(--size-4-1, 4px);
+	opacity: 0;
+	transition: opacity 120ms ease;
+}
+
+.merefolk-render:hover .merefolk-btn-bar,
+.merefolk-btn-bar:focus-within {
+	opacity: 1;
+}
+
+.merefolk-btn {
+	padding: 2px 8px;
+	font-size: var(--font-ui-smaller, 12px);
+	color: var(--text-muted);
+	background: var(--interactive-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s, 4px);
+	cursor: pointer;
+}
+
+.merefolk-btn:hover {
+	color: var(--text-normal);
+	background: var(--interactive-hover);
+}
+
+/* Always-visible warning when the parser skipped lines. */
+.merefolk-warn {
+	position: absolute;
+	top: var(--size-4-2, 8px);
+	left: var(--size-4-2, 8px);
+	z-index: 10;
+	padding: 2px 8px;
+	font-size: var(--font-ui-smaller, 12px);
+	color: var(--text-on-accent, #fff);
+	background: var(--text-warning, #d08770);
+	border: none;
+	border-radius: var(--radius-s, 4px);
+	cursor: pointer;
+}
