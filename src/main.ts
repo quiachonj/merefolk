@@ -10,9 +10,6 @@ import {
 	TFile,
 	normalizePath,
 } from "obsidian";
-// Bundled as a string by esbuild's `.css -> text` loader (see esbuild.config.mjs).
-// Excalidraw 0.18 no longer auto-injects its stylesheet, so we inject it.
-import excalidrawStyles from "@excalidraw/excalidraw/index.css";
 import {
 	ExcalidrawERView,
 	VIEW_TYPE_ER_EXCALIDRAW,
@@ -58,8 +55,6 @@ export default class MerefolkPlugin extends Plugin {
 		w.EXCALIDRAW_ASSET_PATH ??=
 			"https://unpkg.com/@excalidraw/excalidraw@0.18.1/dist/prod/";
 
-		this.injectExcalidrawStyles();
-
 		this.registerView(
 			VIEW_TYPE_ER_EXCALIDRAW,
 			(leaf) => new ExcalidrawERView(leaf, this),
@@ -68,7 +63,9 @@ export default class MerefolkPlugin extends Plugin {
 		this.addCommand({
 			id: "convert-mermaid-er",
 			name: "Convert Mermaid ER diagram to Excalidraw",
-			editorCallback: (editor) => this.convertFromEditor(editor),
+			editorCallback: (editor) => {
+				void this.convertFromEditor(editor);
+			},
 		});
 
 		this.addRibbonIcon("table", "Merefolk: ER → Excalidraw", () => {
@@ -77,7 +74,7 @@ export default class MerefolkPlugin extends Plugin {
 				new Notice("Open a note with a Mermaid ER block first.");
 				return;
 			}
-			this.convertFromEditor(view.editor);
+			void this.convertFromEditor(view.editor);
 		});
 
 		// Replace rendered Mermaid ER blocks with a beautiful Excalidraw SVG
@@ -229,15 +226,9 @@ export default class MerefolkPlugin extends Plugin {
 			text: "Copy",
 			attr: { type: "button", "aria-label": "Copy diagram as SVG" },
 		});
-		copy.addEventListener("click", async (evt) => {
+		copy.addEventListener("click", (evt) => {
 			evt.preventDefault();
-			try {
-				await copyElementsAsSvg(elements);
-				new Notice("Copied SVG to clipboard");
-			} catch (err) {
-				console.error("[merefolk]", err);
-				new Notice("Could not copy SVG");
-			}
+			void this.copyToClipboard(elements);
 		});
 
 		// Escape hatch: only shown when this block is rendering a saved (edited)
@@ -366,6 +357,16 @@ export default class MerefolkPlugin extends Plugin {
 		this.refreshInlineById(id);
 	}
 
+	private async copyToClipboard(elements: readonly unknown[]): Promise<void> {
+		try {
+			await copyElementsAsSvg(elements);
+			new Notice("Copied SVG to clipboard");
+		} catch (err) {
+			console.error("[merefolk]", err);
+			new Notice("Could not copy SVG");
+		}
+	}
+
 	private warnSkipped(skipped: string[]): void {
 		new Notice(
 			`Merefolk skipped ${skipped.length} unrecognized line(s):\n` +
@@ -426,30 +427,23 @@ export default class MerefolkPlugin extends Plugin {
 		});
 	}
 
-	private injectExcalidrawStyles(): void {
-		const styleEl = document.createElement("style");
-		styleEl.id = "merefolk-excalidraw-styles";
-		styleEl.textContent = excalidrawStyles;
-		document.head.appendChild(styleEl);
-		this.register(() => styleEl.remove());
-	}
-
 	// --- Settings -------------------------------------------------------------
 
 	/** Resolved folder where scenes are saved (configured, or the default). */
 	sceneDir(): string {
 		const custom = this.settings.sceneFolder.trim();
-		return custom
-			? normalizePath(custom)
-			: `${this.app.vault.configDir}/merefolk/scenes`;
+		return custom ? normalizePath(custom) : this.defaultSceneFolder();
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData(),
-		);
+		const data =
+			(await this.loadData()) as Partial<MerefolkSettings> | null;
+		this.settings = { ...DEFAULT_SETTINGS, ...(data ?? {}) };
+	}
+
+	/** Default scene folder under the vault's (possibly renamed) config dir. */
+	defaultSceneFolder(): string {
+		return `${this.app.vault.configDir}/merefolk/scenes`;
 	}
 
 	async saveSettings(): Promise<void> {
@@ -468,16 +462,17 @@ class MerefolkSettingTab extends PluginSettingTab {
 	display(): void {
 		this.containerEl.empty();
 
+		const defaultDir = this.plugin.defaultSceneFolder();
 		new Setting(this.containerEl)
 			.setName("Scene folder")
 			.setDesc(
 				"Vault-relative folder for saved .excalidraw scenes. " +
-					"Leave empty to use the default (.obsidian/merefolk/scenes). " +
+					`Leave empty to use the default (${defaultDir}). ` +
 					"Changing this does not move existing scenes.",
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder(".obsidian/merefolk/scenes")
+					.setPlaceholder(defaultDir)
 					.setValue(this.plugin.settings.sceneFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.sceneFolder = value;
@@ -495,7 +490,7 @@ class ConfirmModal extends Modal {
 			title: string;
 			body: string;
 			confirmText: string;
-			onConfirm: () => void;
+			onConfirm: () => void | Promise<void>;
 		},
 	) {
 		super(app);
@@ -513,7 +508,7 @@ class ConfirmModal extends Modal {
 		});
 		confirm.addEventListener("click", () => {
 			this.close();
-			this.opts.onConfirm();
+			void this.opts.onConfirm();
 		});
 		const cancel = buttons.createEl("button", { text: "Cancel" });
 		cancel.addEventListener("click", () => this.close());

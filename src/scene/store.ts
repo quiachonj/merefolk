@@ -29,8 +29,11 @@ export async function loadSceneElements(
 	const path = scenePath(dir, id);
 	if (!(await app.vault.adapter.exists(path))) return null;
 	try {
-		const data = JSON.parse(await app.vault.adapter.read(path));
-		return Array.isArray(data.elements) ? data.elements : null;
+		const data = JSON.parse(await app.vault.adapter.read(path)) as unknown;
+		const elements = (data as { elements?: unknown }).elements;
+		return Array.isArray(elements)
+			? (elements as readonly unknown[])
+			: null;
 	} catch {
 		return null;
 	}

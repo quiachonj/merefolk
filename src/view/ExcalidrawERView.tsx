@@ -51,10 +51,9 @@ export class ExcalidrawERView extends ItemView {
 	}
 
 	async onOpen(): Promise<void> {
+		// `.merefolk-er-view` sets position:relative so the absolutely-filled
+		// React canvas has a positioned, sized box to measure.
 		this.contentEl.addClass("merefolk-er-view");
-		// The React root fills this element absolutely, so it must be a
-		// positioned, sized box.
-		this.contentEl.style.position = "relative";
 		this.renderCanvas();
 	}
 

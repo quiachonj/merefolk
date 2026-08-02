@@ -12,6 +12,10 @@ on:
 
 permissions:
   contents: write
+  # Needed for actions/attest-build-provenance to prove the assets were built
+  # from this repository.
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -27,6 +31,14 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Create release with plugin assets
         env:

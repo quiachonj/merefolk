@@ -1,23 +1,36 @@
 import { exportToClipboard, exportToSvg } from "@excalidraw/excalidraw";
 
-// Our pipeline hands us Excalidraw elements; keep the boundary loose so we
-// don't depend on Excalidraw's deep element types.
-type Elements = Parameters<typeof exportToSvg>[0]["elements"];
+interface ExportOpts {
+	elements: readonly unknown[];
+	appState: Record<string, unknown>;
+	files: Record<string, unknown>;
+	exportPadding?: number;
+}
+
+// Excalidraw's published types don't resolve cleanly under type-aware linting,
+// so we pin concrete signatures for the two helpers we use. Our pipeline hands
+// us real Excalidraw elements; we keep the element type loose at this boundary.
+const svgExport = exportToSvg as unknown as (
+	opts: ExportOpts,
+) => Promise<SVGSVGElement>;
+const clipboardExport = exportToClipboard as unknown as (
+	opts: ExportOpts & { type: "png" | "svg" | "json" },
+) => Promise<void>;
 
 // Transparent background so the render sits on the note's own background.
-const APP_STATE = { exportBackground: false };
+const APP_STATE: Record<string, unknown> = { exportBackground: false };
 // Breathing room around the diagram so it doesn't touch the note edges.
 const PADDING = 20;
 
 /**
- * Render Excalidraw elements to a standalone SVG. Fonts (Excalifont) are
- * inlined by default, so the SVG is self-contained.
+ * Render Excalidraw elements to a standalone SVG. Fonts are inlined by default,
+ * so the SVG is self-contained.
  */
 export function elementsToSvg(
 	elements: readonly unknown[],
 ): Promise<SVGSVGElement> {
-	return exportToSvg({
-		elements: elements as Elements,
+	return svgExport({
+		elements,
 		appState: APP_STATE,
 		files: {},
 		exportPadding: PADDING,
@@ -26,8 +39,8 @@ export function elementsToSvg(
 
 /** Copy the elements to the clipboard as SVG. */
 export function copyElementsAsSvg(elements: readonly unknown[]): Promise<void> {
-	return exportToClipboard({
-		elements: elements as Elements,
+	return clipboardExport({
+		elements,
 		appState: APP_STATE,
 		files: {},
 		type: "svg",
