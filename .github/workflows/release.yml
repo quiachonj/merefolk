@@ -1,0 +1,39 @@
+name: Release Obsidian plugin
+
+# Push a tag matching manifest.json's version (e.g. 0.0.1 — NO "v" prefix) and
+# this builds the plugin and publishes a GitHub Release with main.js,
+# manifest.json, and styles.css attached as assets — exactly what the Obsidian
+# community-plugin validator looks for.
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Create release with plugin assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+        run: |
+          gh release create "$tag" \
+            --title="$tag" \
+            --notes="Release $tag" \
+            main.js manifest.json styles.css
