@@ -1,5 +1,10 @@
 # Merefolk
 
+<!-- Downloads badge — uncomment once accepted into the community store:
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24.merefolk.downloads&label=downloads&color=7c3aed)](https://obsidian.md/plugins?id=merefolk) -->
+[![Release](https://img.shields.io/github/v/release/quiachonj/merefolk?sort=semver&color=7c3aed)](https://github.com/quiachonj/merefolk/releases)
+[![License](https://img.shields.io/github/license/quiachonj/merefolk?color=7c3aed)](LICENSE)
+
 An Obsidian plugin that renders Mermaid **entity-relationship** diagrams as
 beautiful, **editable Excalidraw** drawings — not the rasterized image fallback
 you get from `@excalidraw/mermaid-to-excalidraw` (which
@@ -185,4 +190,4 @@ If Merefolk is useful to you, you can support development:
 
 ## License
 
-MIT
+MIT © Josh Quiachon / Amberlogica
