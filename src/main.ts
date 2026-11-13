@@ -49,9 +49,9 @@ export default class MerefolkPlugin extends Plugin {
 		this.addSettingTab(new MerefolkSettingTab(this.app, this));
 
 		// Excalidraw lazy-loads fonts + web-workers from this path at runtime.
-		// Default points at a CDN, which needs network access. For an offline
-		// build, copy dist/prod/ assets into the plugin folder and set this to
-		// that local path. See README -> "Offline assets".
+		// The default is a CDN pinned to Excalidraw 0.18.1, which needs network
+		// access. Serving these assets locally is an open item (CONTRIBUTING.md
+		// "Roadmap"). A path already set on `window` takes precedence (`??=`).
 		const w = window as unknown as { EXCALIDRAW_ASSET_PATH?: string };
 		w.EXCALIDRAW_ASSET_PATH ??=
 			"https://unpkg.com/@excalidraw/excalidraw@0.18.1/dist/prod/";
@@ -79,7 +79,7 @@ export default class MerefolkPlugin extends Plugin {
 		});
 
 		// Replace rendered Mermaid ER blocks with a beautiful Excalidraw SVG
-		// plus Open/Copy buttons (Reading view / Live Preview).
+		// plus Open/Copy (and Re-sync, ⚠) overlays (Reading view / Live Preview).
 		this.registerMarkdownPostProcessor((el, ctx) =>
 			this.renderErBlock(el, ctx),
 		);
@@ -96,7 +96,7 @@ export default class MerefolkPlugin extends Plugin {
 
 	/**
 	 * If the rendered block is a Mermaid ER diagram, replace its output with an
-	 * Excalidraw-exported SVG and a top-right Open/Copy button group. On any
+	 * Excalidraw-exported SVG and its overlays (see addOverlays). On any
 	 * failure we leave Obsidian's Mermaid render untouched.
 	 */
 	private renderErBlock(
@@ -264,14 +264,14 @@ export default class MerefolkPlugin extends Plugin {
 
 	/** Re-render every inline SVG (e.g. on a theme change). */
 	private rerenderInlineRenders(): void {
-		document
+		activeDocument
 			.querySelectorAll<HTMLElement>(".merefolk-render")
 			.forEach((wrap) => this.rerenderWrap(wrap));
 	}
 
 	/** Re-render only the inline blocks bound to a given saved scene. */
 	private refreshInlineById(id: string): void {
-		document
+		activeDocument
 			.querySelectorAll<HTMLElement>(
 				`.merefolk-render[data-merefolk-id="${CSS.escape(id)}"]`,
 			)
@@ -281,7 +281,8 @@ export default class MerefolkPlugin extends Plugin {
 	private rerenderWrap(wrap: HTMLElement): void {
 		const ref = this.refFromWrap(wrap);
 		const el = wrap.parentElement;
-		if (ref && el instanceof HTMLElement) void this.replaceWithSvg(el, ref);
+		if (ref && el?.instanceOf(HTMLElement))
+			void this.replaceWithSvg(el, ref);
 	}
 
 	private refFromWrap(wrap: HTMLElement): BlockRef | null {

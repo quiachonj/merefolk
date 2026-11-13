@@ -1,14 +1,28 @@
 # Sample ER diagram (test fixture)
 
-Open this note in your test vault, select the diagram body inside the
-`mermaid` block below (or just run the command with your cursor in the note —
-it falls back to the whole file), then run **"Convert selected Mermaid ER
-diagram to Excalidraw"**.
+Open this note in your test vault, in **Reading view** or **Live Preview**. Each
+valid `erDiagram` block below should be replaced inline by an Excalidraw render.
+Hover a render and check the button group:
+
+- **Open** launches the editable canvas (and writes a `%% merefolk:<id>` line
+  right after `erDiagram`); edit something and the inline render updates.
+- **Copy** copies the SVG to the clipboard.
+- **Re-sync** appears only once the diagram has a saved scene; confirm the
+  dialog and the render returns to the Mermaid source.
+
+Second, check the command path: select a diagram body (or put the cursor inside
+a `mermaid` block) and run **"Convert Mermaid ER diagram to Excalidraw"**, or
+click the **Merefolk: ER → Excalidraw** ribbon icon. The source is the
+selection, else the block under the cursor, else the note's only `mermaid`
+block (this note has several, so with the cursor outside every block you get a
+notice instead). These open a one-off canvas whose edits are not saved.
 
 This fixture deliberately exercises:
 
 - entity attribute blocks with `PK` / `FK` / `UK` keys and a quoted comment
-- all four cardinality glyphs (`||`, `|o`, `o{`, `}o`) on both sides
+- all four cardinalities: `||` (exactly one), `o|` (zero or one), `o{` / `}o`
+  (zero or more) and `|{` (one or more); the left-side forms `|o` and `}|` are
+  not exercised
 - identifying (`--`) and non-identifying (`..`) relationships
 - a relationship with and without a label
 

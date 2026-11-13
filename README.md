@@ -1,43 +1,44 @@
 # Merefolk
 
-<!-- Downloads badge — uncomment once accepted into the community store:
+<!-- Downloads badge, uncomment once accepted into the community store:
 [![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24.merefolk.downloads&label=downloads&color=7c3aed)](https://obsidian.md/plugins?id=merefolk) -->
 [![Release](https://img.shields.io/github/v/release/quiachonj/merefolk?sort=semver&color=7c3aed)](https://github.com/quiachonj/merefolk/releases)
 [![License](https://img.shields.io/github/license/quiachonj/merefolk?color=7c3aed)](LICENSE)
 
-An Obsidian plugin that renders Mermaid **entity-relationship** diagrams as
-beautiful, **editable Excalidraw** drawings — not the rasterized image fallback
-you get from `@excalidraw/mermaid-to-excalidraw` (which
-[does not natively support ER diagrams](https://github.com/excalidraw/mermaid-to-excalidraw/issues/59)).
+Merefolk draws Mermaid ER diagrams in Obsidian as Excalidraw drawings you can
+edit. You keep writing a normal `mermaid` block with an `erDiagram`; Merefolk
+shows it as a hand-drawn diagram with crow's-foot relationships, and you can
+open it in Excalidraw to move things around.
+
+Excalidraw's own Mermaid converter
+[doesn't support ER diagrams](https://github.com/excalidraw/mermaid-to-excalidraw/issues/59)
+and turns them into a flat image instead.
 
 **Website:** [merefolk.amberlogica.com](https://merefolk.amberlogica.com/) ·
-**Support:** [Buy me a coffee](https://buymeacoffee.com/joshquiachon) ☕
+**Support:** [Buy me a coffee](https://buymeacoffee.com/joshquiachon)
 
-Write a normal ```mermaid `erDiagram` block. Merefolk replaces it inline with a
-hand-drawn Excalidraw render — crow's-foot cardinality, clean orthogonal
-routing, non-crowding labels — and lets you open it in a full Excalidraw canvas
-to edit, with your changes saved back and shown in the note.
-
-<!-- TODO: add a screenshot or GIF of a rendered diagram + the Open/edit flow. -->
-<!-- ![Merefolk rendering an erDiagram as an editable Excalidraw drawing](docs/screenshot.png) -->
+<!-- TODO: add a screenshot or GIF of a rendered diagram and the Open/edit flow. -->
+<!-- ![A Mermaid erDiagram rendered by Merefolk](docs/screenshot.png) -->
 
 ## Install
 
-> [!NOTE]
-> Merefolk isn't in the Obsidian community store yet. Until it is, install it via
-> [BRAT](https://github.com/TfTHacker/obsidian42-brat) or build it from source —
-> see [Development](#development).
+Merefolk isn't in the community plugin store yet. Install it with
+[BRAT](https://github.com/TfTHacker/obsidian42-brat):
+
+1. Install and enable BRAT from the community store.
+2. In BRAT's settings, choose **Add Beta plugin** and enter `quiachonj/merefolk`.
+3. Enable **Merefolk** under **Settings → Community plugins**.
 
 <!-- Once accepted into the community store, this becomes:
 In Obsidian: **Settings → Community plugins → Browse**, search **Merefolk**,
 Install, then Enable. -->
 
-Merefolk is **desktop-only** and requires **Excalidraw 0.18+** to be installed
-and enabled (for crow's-foot arrowheads).
+Merefolk works on desktop only. It includes Excalidraw, so you don't need the
+Excalidraw plugin.
 
 ## Usage
 
-1. In any note, write a fenced ` ```mermaid ` block containing an `erDiagram`:
+1. Write an `erDiagram` in a `mermaid` block:
 
    ~~~
    ```mermaid
@@ -51,142 +52,75 @@ and enabled (for crow's-foot arrowheads).
    ```
    ~~~
 
-2. Switch to **Reading view** or **Live Preview**. Merefolk replaces the block
-   inline with a hand-drawn Excalidraw diagram — crow's-foot cardinality, clean
-   orthogonal routing, and real table rows. It scales to fit the note and
-   repaints when you switch light/dark theme.
+2. Switch to Reading view or Live Preview. The block shows as an Excalidraw
+   diagram. It shrinks to fit the note and follows your light or dark theme.
 
-3. Hover the diagram and use the button group:
-   - **Open** — launches the diagram in a full, editable Excalidraw canvas.
-   - **Copy** — copies the rendered SVG.
+3. Hover the diagram for its buttons. **Open** opens it in an Excalidraw
+   canvas. **Copy** copies it as SVG.
 
-4. Edit in the canvas. Your changes save to a companion `.excalidraw` scene, and
-   the inline render prefers that saved scene from then on.
+4. Edit it in the canvas. Changes save automatically, and the diagram in your
+   note shows your edited version from then on.
 
-5. Changed your mind? On an edited diagram, use **Re-sync from Mermaid** to
-   discard the saved scene and regenerate from the source block.
+5. To throw your edits away, click **Re-sync** on the diagram and confirm. The
+   diagram is drawn from the Mermaid text again.
 
-> [!NOTE]
-> The Mermaid text is the source of truth **until your first edit** — after that,
-> the saved scene wins.
+The first time you open a diagram, Merefolk adds a line like
+`%% merefolk:mhxk2v9q4f1a` right after `erDiagram`. That line links the block to
+its saved edits. Mermaid ignores it, so leave it in place.
 
-**Three entry points** open a diagram: the inline **Open** button, the command
-**"Convert Mermaid ER diagram to Excalidraw"**, and the ribbon icon
-(**Merefolk: ER → Excalidraw**).
+Until you edit a diagram, it follows the Mermaid text. After you edit it, it
+shows your saved version, and changes to the Mermaid text don't show until you
+click **Re-sync**.
+
+You can also run the command **"Convert Mermaid ER diagram to Excalidraw"** or
+click the **Merefolk: ER → Excalidraw** ribbon icon. They use your selection,
+or the `mermaid` block under the cursor, or the only `mermaid` block in the
+note. Edits made in a canvas opened this way are not saved.
 
 ## Settings
 
-Open **Settings → Merefolk**.
-
 | Setting | What it does | Default |
-|---------|--------------|---------|
-| **Scene folder** | Vault-relative folder where saved `.excalidraw` scenes are stored. | `.obsidian/merefolk/scenes/` (leave empty for default) |
+|---|---|---|
+| **Scene folder** | Where saved edits are kept, as a folder path in your vault. Leave it empty for the default. | `.obsidian/merefolk/scenes` |
 
-> [!NOTE]
-> Changing the scene folder does not move existing scenes.
+Changing the folder doesn't move edits you've already saved.
 
-## Features
+## What's supported
 
-- **Native crow's-foot cardinality** per side (`||`, `|o`, `o{`, `}o` → Excalidraw
-  0.18 crow's-foot arrowheads).
-- **ELK layout** with orthogonal, box-avoiding **arrow routing** and **edge-label
-  placement** (labels don't crowd the lines).
-- **Real table rendering** — each entity is a table: centered header, divider,
-  aligned `[keys] [type] [name]` columns (one element per cell), and subtle row
-  separators.
-- **Theme-aware** colors (light/dark), with live repaint on theme switch.
-- **Clean defaults** — Comic Shanns (mono, easy to read), small text,
-  "architect" (clean) roughness.
-- **Edit + persist** — Open into a live Excalidraw canvas; edits save to a
-  `.excalidraw` scene and the inline render prefers it. A **Re-sync** button
-  discards edits and regenerates from the source.
-- **Robust to malformed input** — unrecognized lines are flagged with a ⚠ badge
-  (never silently dropped); a totally invalid block falls back to Mermaid's own
-  error; non-ER Mermaid is left untouched.
+Merefolk reads the common parts of Mermaid's ER syntax:
 
----
+- Relationships with any cardinality, such as `||--o{`, `}o..o|` or `||--|{`,
+  identifying (`--`) or not (`..`). Each one needs a label after `:`.
+- Attribute blocks, one attribute per line: a type, a name, optional `PK`, `FK`
+  or `UK` keys separated by spaces, and an optional `"comment"`.
+- `%%` comments and `%%{init}%%` directives, which are ignored.
 
-## Architecture
+It doesn't read these yet:
 
-```
-Mermaid `erDiagram`
-  └─ src/mermaid/parseER.ts     parse -> ERModel (+ skipped lines)
-     └─ src/layout/elkLayout.ts   ELK layered layout -> positions, edge routes, label positions
-        └─ src/excalidraw/emit.ts   -> native Excalidraw elements (theme colors, crow's-foot)
-           ├─ src/excalidraw/toSvg.ts   exportToSvg -> inline render (Feature 2)
-           └─ src/view/*               React canvas in an ItemView -> edit + persist (Feature 1)
-```
+- Entity names with anything other than letters, digits and `_`, quoted names,
+  or aliases.
+- Attribute blocks written on one line, like `A { string id }`.
+- Keys separated by commas, like `PK, FK`. Write `PK FK` instead.
 
-Scene persistence: `src/scene/` (stable `%% merefolk:<id>` block id + `.excalidraw`
-files under `.obsidian/merefolk/scenes/`).
+If Merefolk can't read a line, it still draws the rest of the diagram and shows
+a **⚠** badge with the number of skipped lines. Click it to see them. If it
+can't read anything, Obsidian's normal Mermaid render (and its error) is shown
+instead. Mermaid diagrams that aren't `erDiagram` are left alone.
 
-## Development
+## Good to know
 
-Merefolk isn't in the community store yet. To run it from source:
+- Excalidraw loads its fonts from the internet (unpkg). Without a network
+  connection, diagrams may not draw correctly.
+- The Excalidraw canvas is in English only.
+- A diagram you've edited keeps the colors it had when you edited it. It doesn't
+  change when you switch between light and dark themes.
+- Saved edits live in your vault's `.obsidian` folder by default. If your sync
+  tool skips that folder, your edits won't sync. Point **Scene folder** at a
+  regular vault folder if you need them to.
 
-```bash
-npm install
-npm run dev      # esbuild watch -> main.js
-```
+## Contributing
 
-Symlink (or junction) this repo into a test vault's plugins folder so Obsidian
-loads it, then enable **Merefolk** under Settings → Community plugins:
-
-```powershell
-# Windows (no admin needed): junction the repo into the vault
-New-Item -ItemType Junction -Path "C:\path\to\Vault\.obsidian\plugins\merefolk" -Target (Get-Location)
-```
-
-```bash
-npm run build    # type-check + production bundle
-```
-
-Open `test/sample-er.md` (which also contains malformed/edge-case fixtures) to
-exercise every path.
-
-## Hard-won implementation notes
-
-> [!IMPORTANT]
-> Requires **Excalidraw 0.18+** — crow's-foot arrowheads (`crowfoot_one` /
-> `crowfoot_many` / `crowfoot_one_or_many`) don't exist before it.
-
-1. **0.18 build wiring** — 0.18 ships conditional exports and its CSS subpath has
-   no `default` condition, so `esbuild.config.mjs` pins `conditions: ["production"]`.
-   0.18 does NOT auto-inject its stylesheet, so it's imported and bundled as a
-   string via the `.css -> text` loader, then injected at runtime (`src/globals.d.ts`
-   declares `*.css`).
-2. **Bound arrows need explicit `x`/`y` + points** — otherwise
-   `convertToExcalidrawElements` derives `NaN` geometry, which cascades to a `NaN`
-   zoom and a call-stack overflow. Arrows use ELK's route points.
-3. **`elbowed` doesn't route in a static export** — elbow routing is
-   interaction-time only. We use ELK's orthogonal `edge.sections` for the arrow
-   points instead.
-4. **Load scenes via `initialData`** on a fresh mount, never `setState` from the
-   `excalidrawAPI` render-phase callback (infinite render loop).
-5. **Theme:** colors are baked per active theme (a fixed dark stroke is invisible
-   on a dark background); inline renders re-derive on the `css-change` event.
-6. **Bundle:** aliased out Excalidraw's built-in `@excalidraw/mermaid-to-excalidraw`
-   dialog dep (cytoscape/katex, ~6 MB) via `src/stubs/` — it's only lazily
-   imported and we never open that dialog.
-
-## Roadmap
-
-- [x] Settings tab for the scene-folder location.
-- [x] "Re-sync from Mermaid" escape hatch — a per-diagram button (shown only on
-      edited scenes) that discards edits and regenerates from the source.
-- [x] Render each attribute as its own row — a real table (centered header +
-      divider + aligned `[keys] [type] [name]` columns), one element per cell.
-- [ ] Swap the hand-written parser for Mermaid's own ER parser (full syntax
-      fidelity, at the cost of the `mermaid` dep).
-- [ ] Bundle Excalidraw assets locally for offline vaults.
-- [ ] Unit tests for `parseER` / `elkLayout` (Vitest).
-
-## Support
-
-If Merefolk is useful to you, you can support development:
-
-- ☕ [Buy me a coffee](https://buymeacoffee.com/joshquiachon)
-- 🌐 [merefolk.amberlogica.com](https://merefolk.amberlogica.com/)
+To build from source or change the plugin, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

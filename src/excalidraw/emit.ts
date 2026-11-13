@@ -29,7 +29,7 @@ const ROUGHNESS = 0; // "architect" sloppiness
  * Each entity is a table: a centered header over a divider, then one row per
  * attribute laid out in aligned `[keys] [type] [name]` columns. Relationships
  * follow ELK's orthogonal routes with crow's-foot cardinality at each end.
- * Colors come from the active theme; text uses Excalifont at the small size and
+ * Colors come from the active theme; text uses Comic Shanns at the small size and
  * shapes use "architect" (roughness 0).
  */
 export function emitExcalidrawElements(

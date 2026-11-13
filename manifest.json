@@ -1,9 +1,9 @@
 {
 	"id": "merefolk",
 	"name": "Merefolk",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "1.5.0",
-	"description": "Mermaid ER diagrams as native, editable Excalidraw — crow's-foot cardinality and clean layout.",
+	"description": "Mermaid ER diagrams as editable Excalidraw drawings, with crow's-foot cardinality and clean layout.",
 	"author": "Amberlogica",
 	"authorUrl": "https://www.amberlogica.com",
 	"fundingUrl": "https://buymeacoffee.com/joshquiachon",
