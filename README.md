@@ -1,7 +1,6 @@
 # Merefolk
 
-<!-- Downloads badge, uncomment once accepted into the community store:
-[![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24.merefolk.downloads&label=downloads&color=7c3aed)](https://obsidian.md/plugins?id=merefolk) -->
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24.merefolk.downloads&label=downloads&color=7c3aed)](https://community.obsidian.md/plugins/merefolk)
 [![Release](https://img.shields.io/github/v/release/quiachonj/merefolk?sort=semver&color=7c3aed)](https://github.com/quiachonj/merefolk/releases)
 [![License](https://img.shields.io/github/license/quiachonj/merefolk?color=7c3aed)](LICENSE)
 
@@ -27,16 +26,9 @@ The diagram above is the first example in
 
 ## Install
 
-Merefolk isn't in the community plugin store yet. Install it with
-[BRAT](https://github.com/TfTHacker/obsidian42-brat):
-
-1. Install and enable BRAT from the community store.
-2. In BRAT's settings, choose **Add Beta plugin** and enter `quiachonj/merefolk`.
-3. Enable **Merefolk** under **Settings → Community plugins**.
-
-<!-- Once accepted into the community store, this becomes:
-In Obsidian: **Settings → Community plugins → Browse**, search **Merefolk**,
-Install, then Enable. -->
+In Obsidian, open **Settings → Community plugins → Browse**, search for
+**Merefolk**, then select **Install** and **Enable**. You can also open
+[Merefolk in the community plugin directory](https://community.obsidian.md/plugins/merefolk).
 
 Merefolk works on desktop only. It includes Excalidraw, so you don't need the
 Excalidraw plugin.
