@@ -152,6 +152,8 @@ export function emitExcalidrawElements(
 			startArrowhead: CROWFOOT[r.leftCardinality],
 			endArrowhead: CROWFOOT[r.rightCardinality],
 			strokeColor: colors.stroke,
+			// Mermaid draws non-identifying (`..`) relationships dashed.
+			strokeStyle: r.identifying ? "solid" : "dashed",
 			roughness: ROUGHNESS,
 		});
 	}

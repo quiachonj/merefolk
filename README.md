@@ -95,8 +95,9 @@ Changing the folder doesn't move edits you've already saved.
 Merefolk reads the common parts of Mermaid's ER syntax:
 
 - Relationships with any cardinality, such as `||--o{`, `}o..o|` or `||--|{`.
-  Each one needs a label after `:`. Identifying (`--`) and non-identifying
-  (`..`) relationships are both drawn as solid lines for now.
+  Each one needs a label after `:`. Identifying (`--`) relationships are
+  drawn as solid lines and non-identifying (`..`) relationships as dashed
+  lines.
 - Attribute blocks, one attribute per line: a type, a name, optional `PK`, `FK`
   or `UK` keys separated by spaces, and an optional `"comment"`.
 - `%%` comments and `%%{init}%%` directives, which are ignored.
