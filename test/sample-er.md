@@ -26,6 +26,10 @@ This fixture deliberately exercises:
 - identifying (`--`) and non-identifying (`..`) relationships
 - a relationship with and without a label
 
+The "Mermaid syntax fixture" covers aliases, word cardinalities, comma-separated
+keys, generics, one-line blocks and `direction`. The edge cases cover what
+isn't read.
+
 ```mermaid
 erDiagram
     CUSTOMER ||--o{ ORDER : places
@@ -101,6 +105,50 @@ erDiagram
     }
 ```
 
+## Mermaid syntax fixture
+
+The same syntax Mermaid's own `erDiagram` accepts. **Expected:** no **⚠ badge**
+and a top-to-bottom layout (`direction TB`; without a `direction` line Merefolk
+lays out left to right). Check:
+
+- `Customer` and `Sales Order` show their aliases in the header, while the
+  relationships still connect them by id (`customer`, `order`). `LINE-ITEM`
+  keeps its hyphen.
+- `string id PK, FK` shows `PK,FK`; `List~int~` shows as `List<int>` and
+  `Map~string, int~` as `Map<string, int>`.
+- `customer only one to zero or more order` is a solid line with a crow's foot
+  (zero or more) at `Sales Order`.
+- `order ||.-o{ PRODUCT` and `optionally to` draw dashed lines.
+- `PRODUCT` (one-line block) shows one row; `Coupon` (a bare name) is a box
+  with just its name.
+- The `||` end of the dashed `mentions` line at `Sales Order` is a full, solid
+  bar, not a broken one.
+
+```mermaid
+erDiagram
+    direction TB
+    accTitle: Orders, written in Mermaid's syntax
+    customer[Customer] {
+        string id PK, FK
+        string email UK "login identifier"
+        List~int~ scores
+    }
+    order["Sales Order"] {
+        int id PK
+        string customerId FK
+        Map~string, int~ totals
+    }
+    LINE-ITEM {
+        int quantity
+    }
+    PRODUCT { string sku PK }
+    Coupon
+    customer only one to zero or more order : places
+    order one or more optionally to many(0) LINE-ITEM : contains
+    PRODUCT zero or one to one or many LINE-ITEM : "ordered as"
+    order ||.-o{ PRODUCT : mentions
+```
+
 ## Edge cases (test malformed / unsupported handling)
 
 Each block below exercises a different failure mode. Open this note in
@@ -130,11 +178,11 @@ erDiagram
     }
 ```
 
-### 2. Unsupported syntax (single-line blocks) → renders + ⚠ badge
+### 2. One-line blocks → read, no warning
 
-Single-line `A { ... }` blocks aren't parsed (only multi-line blocks are).
-**Expected:** boxes `A` and `B` with the edge but **no attributes**, plus a
-**⚠ 2** badge listing both single-line blocks.
+Mermaid accepts `A { string id PK }` on one line, and so does Merefolk.
+**Expected:** boxes `A` and `B` with the edge, each showing one `PK` `string id`
+row, and **no ⚠ badge**.
 
 ```mermaid
 erDiagram
@@ -146,7 +194,7 @@ erDiagram
 ### 3. Unclosed block → recovers, no warning
 
 `ACCOUNT {` is never closed before `TX {`. **Expected:** Merefolk closes the
-block and renders both entities fully — **no ⚠ badge**. (Note: native Mermaid
+block and renders both entities fully, with **no ⚠ badge**. (Note: native Mermaid
 would error on this; Merefolk recovers leniently.)
 
 ```mermaid
@@ -181,7 +229,7 @@ erDiagram
 
 ### 5. Totally unparseable → falls back to native Mermaid
 
-No valid entities, so Merefolk bows out and lets Obsidian render the block —
+No valid entities, so Merefolk bows out and lets Obsidian render the block,
 which shows **Mermaid's own error**. **Expected:** a Mermaid error box, no
 Merefolk render or buttons.
 
@@ -191,7 +239,40 @@ erDiagram
     ??? nonsense
 ```
 
-### 6. Non-ER diagram → left alone
+### 6. Bad attribute line inside a block → only that line is reported
+
+`!!! nonsense` can't be read as an attribute, but the block stays open.
+**Expected:** `BOX` shows `id` and `after` (two rows), and the **⚠ 1** badge lists
+only `!!! nonsense`. The closing `}` is not reported.
+
+```mermaid
+erDiagram
+    BOX ||--o{ ITEM : holds
+    BOX {
+        string id PK
+        !!! nonsense
+        int after
+    }
+    ITEM {
+        string id PK
+    }
+```
+
+### 7. Styling → drawn without the style + ⚠ badge
+
+Mermaid styling (`classDef`, `class`, `style`, `:::`) isn't drawn.
+**Expected:** both entities and the edge render in the normal colors, plus a
+**⚠ 3** badge listing the `classDef`, `class` and `style` lines.
+
+```mermaid
+erDiagram
+    A ||--o{ B : has
+    classDef hot fill:#f96
+    class A hot
+    style B fill:#9cf
+```
+
+### 8. Non-ER diagram → left alone
 
 A flowchart is valid Mermaid but not an ER diagram, so Merefolk never touches it.
 **Expected:** a normal Mermaid flowchart, no Merefolk render or buttons.

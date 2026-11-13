@@ -73,18 +73,21 @@ export function emitExcalidrawElements(
 		const headerW = e.name.length * CHAR_WIDTH;
 		skeleton.push(text(e.x + (e.width - headerW) / 2, e.y + 8, e.name));
 
-		// Divider under the header.
-		skeleton.push({
-			type: "line",
-			x: e.x,
-			y: e.y + m.headerHeight,
-			points: [
-				[0, 0],
-				[e.width, 0],
-			],
-			strokeColor: colors.stroke,
-			roughness: ROUGHNESS,
-		});
+		// Divider under the header. An entity with no attributes is just a box
+		// with its name, as Mermaid draws it.
+		if (e.attributes.length > 0) {
+			skeleton.push({
+				type: "line",
+				x: e.x,
+				y: e.y + m.headerHeight,
+				points: [
+					[0, 0],
+					[e.width, 0],
+				],
+				strokeColor: colors.stroke,
+				roughness: ROUGHNESS,
+			});
+		}
 
 		// One row per attribute: [keys] [type] [name] in aligned columns.
 		e.attributes.forEach((a, i) => {

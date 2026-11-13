@@ -49,7 +49,10 @@ export function entityMetrics(entity: EREntity): EntityMetrics {
 
 	return {
 		width: PAD_X + contentW + PAD_X,
-		height: HEADER_HEIGHT + attrs.length * ROW_HEIGHT + 6,
+		// No attributes: just the header, with no empty strip under it.
+		height: attrs.length
+			? HEADER_HEIGHT + attrs.length * ROW_HEIGHT + 6
+			: HEADER_HEIGHT,
 		headerHeight: HEADER_HEIGHT,
 		rowHeight: ROW_HEIGHT,
 		keyX: PAD_X,

@@ -84,22 +84,34 @@ Changing the folder doesn't move edits you've already saved.
 
 ## What's supported
 
-Merefolk reads the common parts of Mermaid's ER syntax:
+Merefolk reads Mermaid's ER syntax:
 
-- Relationships with any cardinality, such as `||--o{`, `}o..o|` or `||--|{`.
-  Each one needs a label after `:`. Identifying (`--`) relationships are
-  drawn as solid lines and non-identifying (`..`) relationships as dashed
-  lines.
-- Attribute blocks, one attribute per line: a type, a name, optional `PK`, `FK`
-  or `UK` keys separated by spaces, and an optional `"comment"`.
-- `%%` comments and `%%{init}%%` directives, which are ignored.
+- Relationships with any cardinality, written as symbols (`||--o{`, `}o..o|`)
+  or words (`only one to zero or more`, `zero or one optionally to many`). Each
+  one needs a label after `:`. Identifying relationships (`--`, `to`) are drawn
+  as solid lines. Non-identifying ones (`..`, `.-`, `-.`, `optionally to`) are
+  drawn as dashed lines.
+- Entity names with letters, digits, `_`, `-`, `.` and non-English characters,
+  or a name in double quotes such as `"Order Item"`.
+- Aliases, as in `p[Person] { ... }` or `p["Customer Account"]`. The table
+  header shows the alias, and relationships use the short name.
+- Attribute blocks: a type, a name, optional `PK`, `FK` or `UK` keys separated
+  by commas or spaces, and an optional `"comment"`. A block can be written on
+  one line, like `A { string id PK }`. A bare name on its own line, like `A`,
+  draws a box with just that name.
+- Generic types such as `List~int~`, shown as `List<int>`.
+- `direction TB`, `BT`, `LR` or `RL`. Without it, diagrams are laid out left to
+  right.
+- `%%` comments, `%%{init}%%` directives, `accTitle`, `accDescr`, and front
+  matter (a `---` block with a `title` or `config` before `erDiagram`). These
+  are ignored.
 
-It doesn't read these yet:
+It doesn't read these:
 
-- Entity names with anything other than letters, digits and `_`, quoted names,
-  or aliases.
-- Attribute blocks written on one line, like `A { string id }`.
-- Keys separated by commas, like `PK, FK`. Write `PK FK` instead.
+- Styling: `classDef`, `class`, `style` and `:::`. The diagram is drawn
+  without the styles.
+- `subgraph` and `end`.
+- The `u` (parent) cardinality marker.
 
 If Merefolk can't read a line, it still draws the rest of the diagram and shows
 a **⚠** badge with the number of skipped lines. Click it to see them. If it

@@ -14,7 +14,9 @@ export interface ERAttribute {
 }
 
 export interface EREntity {
+	/** Identity: what relationships and the Excalidraw box refer to. */
 	id: string;
+	/** What the table header shows: the alias when there is one, else the id. */
 	name: string;
 	attributes: ERAttribute[];
 }
@@ -26,13 +28,18 @@ export interface ERRelationship {
 	leftCardinality: Cardinality;
 	rightCardinality: Cardinality;
 	label?: string;
-	/** `--` identifying vs `..` non-identifying */
+	/** Identifying (`--`, `to`) is drawn solid; non-identifying (`..`, `.-`, `-.`, `optionally to`) dashed. */
 	identifying: boolean;
 }
+
+/** Mermaid's `direction` values: top-bottom, bottom-top, left-right, right-left. */
+export type ERDirection = "TB" | "BT" | "LR" | "RL";
 
 export interface ERModel {
 	entities: EREntity[];
 	relationships: ERRelationship[];
+	/** From a `direction` line; unset means Merefolk's default (left to right). */
+	direction?: ERDirection;
 	/** Non-blank, non-comment lines the parser did not recognize. */
 	skipped: string[];
 }

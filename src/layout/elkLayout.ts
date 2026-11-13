@@ -1,5 +1,5 @@
 import ELK from "elkjs/lib/elk.bundled.js";
-import type { ERModel, PositionedEntity } from "../types";
+import type { ERDirection, ERModel, PositionedEntity } from "../types";
 import { entityMetrics } from "../metrics";
 
 const elk = new ELK();
@@ -36,6 +36,13 @@ export interface LayoutResult {
 	labels: Map<string, EdgeLabel>;
 }
 
+const ELK_DIRECTION: Record<ERDirection, string> = {
+	TB: "DOWN",
+	BT: "UP",
+	LR: "RIGHT",
+	RL: "LEFT",
+};
+
 const LABEL_CHAR_WIDTH = 8;
 const LABEL_HEIGHT = 20;
 
@@ -58,7 +65,9 @@ export async function layoutER(model: ERModel): Promise<LayoutResult> {
 		id: "root",
 		layoutOptions: {
 			"elk.algorithm": "layered",
-			"elk.direction": "RIGHT",
+			// Mermaid's own default is TB, but Merefolk has always laid out left to
+			// right and keeps doing so unless the diagram says `direction`.
+			"elk.direction": ELK_DIRECTION[model.direction ?? "LR"],
 			"elk.edgeRouting": "ORTHOGONAL",
 			// Generous spacing: the inline SVG scales down to fit the note, so a
 			// roomy layout reads as a cohesive, zoomed-out whole. Cramming only
