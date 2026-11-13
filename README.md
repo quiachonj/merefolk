@@ -17,8 +17,13 @@ and turns them into a flat image instead.
 **Website:** [merefolk.amberlogica.com](https://merefolk.amberlogica.com/) ·
 **Support:** [Buy me a coffee](https://buymeacoffee.com/joshquiachon)
 
-<!-- TODO: add a screenshot or GIF of a rendered diagram and the Open/edit flow. -->
-<!-- ![A Mermaid erDiagram rendered by Merefolk](docs/screenshot.png) -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
+  <img alt="An erDiagram with seven entities (CUSTOMER, ADDRESS, ORDER, COUPON, LINE_ITEM, PRODUCT, CATEGORY) drawn by Merefolk as Excalidraw tables with crow's-foot relationship lines and labels" src="docs/screenshot-light.png">
+</picture>
+
+The diagram above is the first example in
+[`test/sample-er.md`](test/sample-er.md), drawn by Merefolk.
 
 ## Install
 
@@ -89,8 +94,9 @@ Changing the folder doesn't move edits you've already saved.
 
 Merefolk reads the common parts of Mermaid's ER syntax:
 
-- Relationships with any cardinality, such as `||--o{`, `}o..o|` or `||--|{`,
-  identifying (`--`) or not (`..`). Each one needs a label after `:`.
+- Relationships with any cardinality, such as `||--o{`, `}o..o|` or `||--|{`.
+  Each one needs a label after `:`. Identifying (`--`) and non-identifying
+  (`..`) relationships are both drawn as solid lines for now.
 - Attribute blocks, one attribute per line: a type, a name, optional `PK`, `FK`
   or `UK` keys separated by spaces, and an optional `"comment"`.
 - `%%` comments and `%%{init}%%` directives, which are ignored.
