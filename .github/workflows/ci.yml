@@ -1,0 +1,38 @@
+name: CI
+
+# Runs the same install and build as the release workflow on every pull request
+# and push to main, so a broken lockfile or an oversized main.js shows up
+# before a release tag is pushed.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same Node as release.yml (npm 11 is needed for the lockfile).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      - name: Install
+        run: npm ci
+
+      # Type-check and production bundle. Fails if main.js reaches 5,000,000
+      # bytes (see esbuild.config.mjs).
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npx prettier --check "src/**/*.{ts,tsx}" esbuild.config.mjs

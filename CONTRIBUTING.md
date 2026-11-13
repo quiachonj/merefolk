@@ -5,7 +5,9 @@ This file is for people changing the plugin. If you only want to use it, the
 
 ## Build from source
 
-You need Node 20 or later.
+You need Node 24 or later, or any Node with npm 11 or later. With npm 10,
+`npm ci` rejects the lockfile because it reads the scoped `overrides` in
+`package.json` differently.
 
 ```bash
 npm install
@@ -98,7 +100,8 @@ it downgrades Excalidraw to 0.17.6.
 Run `npm version <x.y.z>`. It updates `manifest.json` and `versions.json`. Then
 push a tag that matches the manifest version exactly, with no `v` prefix. The
 release workflow builds the plugin and attaches `main.js`, `manifest.json` and
-`styles.css` to a GitHub release.
+`styles.css` to a GitHub release. The CI workflow runs the same install and
+build on every pull request, so make sure it is green before you tag.
 
 ## Roadmap
 
