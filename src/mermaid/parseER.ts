@@ -36,9 +36,10 @@ const ATTR_RE =
  * Lightweight, dependency-free parser for the common Mermaid `erDiagram`
  * subset (entity attribute blocks + binary relationships).
  *
- * TODO: for full syntax coverage (aliases, quoted entity names, generics),
- * swap this for Mermaid's own parser via `mermaid.mermaidAPI` once we pin a
- * version whose parser API we're comfortable depending on.
+ * Aliases, quoted entity names and generics are not parsed; those lines are
+ * reported in `skipped`. Full syntax coverage would mean using Mermaid's own
+ * parser (`mermaid.mermaidAPI`), which adds the `mermaid` dependency; it is on
+ * the CONTRIBUTING.md roadmap.
  */
 export function parseMermaidER(source: string): ERModel {
 	const lines = source.replace(/\r/g, "").split("\n");
