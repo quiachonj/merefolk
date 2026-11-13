@@ -64,6 +64,10 @@ export async function layoutER(model: ERModel): Promise<LayoutResult> {
 			// roomy layout reads as a cohesive, zoomed-out whole. Cramming only
 			// hurts label + crow's-foot legibility.
 			"elk.layered.spacing.nodeNodeBetweenLayers": "110",
+			// Excalidraw draws a crow's foot 20px long and shrinks it when the
+			// adjoining segment is under 40px. ELK's default (10) put the first
+			// bend 10px out of the box; 55 keeps every end segment above 40.
+			"elk.layered.spacing.edgeNodeBetweenLayers": "55",
 			"elk.spacing.nodeNode": "80",
 			"elk.spacing.edgeNode": "25",
 			"elk.spacing.edgeEdge": "15",
