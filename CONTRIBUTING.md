@@ -14,6 +14,7 @@ npm install
 npm run dev      # watch build: writes main.js and styles.css
 npm run build    # type-check, then the production bundle
 npm run lint
+npm test         # Vitest: parser and layout tests in test/*.test.ts
 ```
 
 To load your build in Obsidian, link the repo into a test vault's plugins
@@ -24,8 +25,9 @@ junction works without admin rights:
 New-Item -ItemType Junction -Path "C:\path\to\Vault\.obsidian\plugins\merefolk" -Target (Get-Location)
 ```
 
-`test/sample-er.md` has a full diagram, a minimal one, and one block per
-malformed or unsupported case. Open it in the test vault to check every path.
+`test/sample-er.md` has a full diagram, a minimal one, one using Mermaid's
+newer syntax (aliases, word cardinalities, generics, `direction`), and one block
+per malformed or unsupported case. Open it in the test vault to check every path.
 
 ## How it works
 
@@ -45,7 +47,7 @@ Mermaid erDiagram
 | `src/types.ts` | The `ERModel` types every stage shares |
 | `src/theme.ts` | Light and dark diagram colors |
 | `src/metrics.ts` | Entity box sizes, shared by layout and emit so they agree |
-| `src/mermaid/parseER.ts` | The ER parser. It collects lines it can't read so the UI can warn |
+| `src/mermaid/parseER.ts` | The ER parser, written against Mermaid's own lexer and grammar (cardinality words, connectors, name and attribute tokens, aliases, `direction`). It collects lines it can't read so the UI can warn, and an unreadable attribute line doesn't close its block |
 | `src/mermaid/extractBlock.ts` | Finds `mermaid` blocks in a note, and the one under the cursor |
 | `src/layout/elkLayout.ts` | ELK layered layout, orthogonal routes, label positions |
 | `src/excalidraw/emit.ts` | Positioned entities to Excalidraw elements |
@@ -94,6 +96,14 @@ it downgrades Excalidraw to 0.17.6.
    plan caps files at 5 MB, so `npm run build` fails when `main.js` reaches
    5,000,000 bytes. The dev build is unminified and isn't checked. Today
    `main.js` is about 4.8 MB.
+8. **Excalidraw's "exactly one" bar is patched at build time.** Excalidraw 0.18
+   draws the `crowfoot_one` arrowhead with the arrow's dash pattern, so on a
+   dashed (non-identifying) relationship the bar falls partly into a gap. Its
+   other crow's-foot arrowheads drop the dash first. The
+   `merefolk-patch-crowfoot-one` build step in `esbuild.config.mjs` makes
+   `crowfoot_one` do the same, which fixes both the inline render and the
+   canvas. The build fails if it doesn't find that code exactly once, so check
+   it after any Excalidraw upgrade.
 
 ## Releasing
 
@@ -105,7 +115,7 @@ build on every pull request, so make sure it is green before you tag.
 
 ## Roadmap
 
-- [ ] Use Mermaid's own ER parser for full syntax support (adds the `mermaid`
-      dependency).
+- [ ] Draw what the parser skips today: styling (`classDef`, `class`, `style`,
+      `:::`), `subgraph`, and the `u` cardinality marker. Mermaid's own ER
+      parser would cover them but adds the `mermaid` dependency.
 - [ ] Bundle Excalidraw's assets (fonts and workers) so the plugin works offline.
-- [ ] Unit tests for `parseER` and `elkLayout` (Vitest).

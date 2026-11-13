@@ -78,6 +78,51 @@ const stubLocalesPlugin = {
 	},
 };
 
+// Excalidraw 0.18 draws the `crowfoot_one` arrowhead (the "exactly one" bar)
+// with the arrow's dash pattern, so on a dashed (non-identifying) relationship
+// the bar falls partly into a gap. Its other crow's-foot cases delete
+// `strokeLineDash` first; this patch makes `crowfoot_one` do the same, in both
+// the inline SVG and the editable canvas. The build fails if the pattern is not
+// found exactly once, so an Excalidraw upgrade cannot silently drop the fix.
+const CROWFOOT_ONE_RE = /case"crowfoot_one":return (\w+)\((\w+),(\w+)\);/g;
+const patchCrowfootOnePlugin = {
+	name: "merefolk-patch-crowfoot-one",
+	setup(build) {
+		let patched = 0;
+		build.onStart(() => {
+			patched = 0;
+		});
+		build.onLoad(
+			{
+				filter: /[\\/]@excalidraw[\\/]excalidraw[\\/]dist[\\/]prod[\\/][^\\/]+\.js$/,
+			},
+			(args) => {
+				const source = readFileSync(args.path, "utf8");
+				if (!source.includes('case"crowfoot_one":')) return;
+				const contents = source.replace(
+					CROWFOOT_ONE_RE,
+					(_, fn, pts, opts) => {
+						patched++;
+						return `case"crowfoot_one":return delete ${opts}.strokeLineDash,${fn}(${pts},${opts});`;
+					},
+				);
+				return { contents, loader: "js" };
+			},
+		);
+		build.onEnd((result) => {
+			if (result.errors.length === 0 && patched !== 1) {
+				return {
+					errors: [
+						{
+							text: `merefolk-patch-crowfoot-one patched ${patched} sites in @excalidraw/excalidraw (expected 1). Check the crowfoot_one case in its dist/prod build.`,
+						},
+					],
+				};
+			}
+		});
+	},
+};
+
 const context = await esbuild.context({
 	banner: { js: banner },
 	entryPoints: ["src/main.ts"],
@@ -118,7 +163,7 @@ const context = await esbuild.context({
 		"@lezer/lr",
 		...builtinModules,
 	],
-	plugins: [stylesPlugin, stubLocalesPlugin],
+	plugins: [stylesPlugin, stubLocalesPlugin, patchCrowfootOnePlugin],
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: "main.js",
