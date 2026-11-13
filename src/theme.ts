@@ -9,7 +9,7 @@ export interface DiagramColors {
 
 /** Obsidian sets `theme-dark` / `theme-light` on <body>. */
 export function isDarkTheme(): boolean {
-	return document.body.classList.contains("theme-dark");
+	return activeDocument.body.classList.contains("theme-dark");
 }
 
 /**

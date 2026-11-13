@@ -1,7 +1,7 @@
 import type { App } from "obsidian";
 
 // Edited scenes persist as `.excalidraw` JSON in a configurable vault folder
-// (default: under the plugin's config dir, out of the note tree). The directory
+// (default: under the vault's config dir, out of the note tree). The directory
 // is passed in so the settings tab can point it elsewhere.
 
 function scenePath(dir: string, id: string): string {
